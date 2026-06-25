@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const { customer_name, customer_phone, device_brand, device_model, issue_description, pickup_address, pickup_slot } = body;
 
     // 1. Create a draft booking in Supabase
-    const { data: booking, error } = await supabaseAdmin
+    const { data: booking, error } = await (supabaseAdmin
       .from('bookings')
       .insert({
         customer_name,
@@ -25,9 +25,9 @@ export async function POST(req: Request) {
         pickup_slot,
         status: 'PENDING_PAYMENT',
         booking_fee_paid: false
-      })
+      } as any)
       .select()
-      .single();
+      .single() as any);
 
     if (error) throw error;
 

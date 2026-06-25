@@ -26,15 +26,15 @@ export async function POST(req: Request) {
       const bookingId = order.receipt;
 
       // Update booking status
-      const { data: booking, error } = await supabaseAdmin
+      const { data: booking, error } = await (supabaseAdmin
         .from('bookings')
         .update({
           status: 'BOOKED',
           booking_fee_paid: true
-        })
+        } as any)
         .eq('id', bookingId)
         .select()
-        .single();
+        .single() as any);
 
       if (error) throw error;
 

@@ -30,23 +30,23 @@ export default function TrackingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 text-foreground transition-colors">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-gray-500 hover:text-gray-700">
+          <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft size={24} />
           </Link>
           <h1 className="text-2xl font-bold">Repair Status</h1>
         </div>
 
         {/* Status Card */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-100">
+        <div className="bg-card p-6 rounded-xl shadow-sm border border-border">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <p className="text-sm text-gray-500 uppercase tracking-wider font-semibold">Booking ID</p>
-              <h2 className="text-xl font-mono font-bold text-blue-600">{id}</h2>
+              <p className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Booking ID</p>
+              <h2 className="text-xl font-mono font-bold text-primary">{id}</h2>
             </div>
-            <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-2">
+            <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold flex items-center gap-2 border border-primary/20">
               <Clock size={16} />
               {booking.status.replace('_', ' ')}
             </div>
@@ -54,12 +54,12 @@ export default function TrackingPage() {
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-500">Device</p>
-              <p className="font-medium">{booking.device}</p>
+              <p className="text-muted-foreground">Device</p>
+              <p className="font-medium text-foreground">{booking.device}</p>
             </div>
             <div>
-              <p className="text-gray-500">Booked On</p>
-              <p className="font-medium">{booking.createdAt}</p>
+              <p className="text-muted-foreground">Booked On</p>
+              <p className="font-medium text-foreground">{booking.createdAt}</p>
             </div>
           </div>
         </div>
@@ -79,26 +79,26 @@ export default function TrackingPage() {
           <Timeline items={timelineItems} />
 
           {/* Photo Log */}
-          <div className="bg-white p-6 rounded-xl shadow-sm space-y-6">
-            <h3 className="font-bold flex items-center gap-2">
-              <Camera size={18} className="text-blue-600" />
+          <div className="bg-card p-6 rounded-xl shadow-sm space-y-6 border border-border">
+            <h3 className="font-bold flex items-center gap-2 text-foreground">
+              <Camera size={18} className="text-primary" />
               Repair Photo Log
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <div className="aspect-video bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400 text-xs text-center p-2">
+                <div className="aspect-video bg-muted rounded-lg border border-border flex items-center justify-center text-muted-foreground text-[10px] text-center p-2 uppercase font-bold tracking-tighter">
                   [PICKUP PHOTO: External Condition]
                 </div>
-                <p className="text-[10px] font-bold uppercase text-gray-400">Picked Up</p>
+                <p className="text-[10px] font-bold uppercase text-muted-foreground">Picked Up</p>
               </div>
               <div className="space-y-2 opacity-50">
-                <div className="aspect-video bg-gray-50 rounded-lg border-2 border-dashed flex items-center justify-center text-gray-400 text-xs">
+                <div className="aspect-video bg-muted/50 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground text-[10px] font-bold uppercase tracking-tighter">
                   Awaiting...
                 </div>
-                <p className="text-[10px] font-bold uppercase text-gray-400 font-mono">In Repair</p>
+                <p className="text-[10px] font-bold uppercase text-muted-foreground font-mono">In Repair</p>
               </div>
             </div>
-            <p className="text-xs text-gray-400 italic bg-gray-50 p-3 rounded-lg border border-gray-100">
+            <p className="text-xs text-muted-foreground italic bg-muted/30 p-3 rounded-lg border border-border/50">
               Photographic documentation is provided at every stage to ensure 100% transparency.
             </p>
           </div>

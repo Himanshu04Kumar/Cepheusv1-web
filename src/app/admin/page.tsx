@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,7 +17,6 @@ export default function AdminDashboard() {
   const [copied, setCopied] = useState(false);
   const router = useRouter();
 
-  // Staff creation form
   const [staffEmail, setStaffEmail] = useState('');
   const [staffPass, setStaffPass] = useState('');
   const [creatingStaff, setCreatingStaff] = useState(false);
@@ -104,10 +103,25 @@ export default function AdminDashboard() {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleDeleteStaff = async (userId: string, email: string) => {
+    if (email === profile?.email) return alert("Cannot self-destruct Super Admin session.");
+    if (!confirm(`Are you sure you want to terminate access for ${email}?`)) return;
+
+    try {
+      const res = await fetch('/api/admin/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'DELETE_EMPLOYEE',
+          userId
+        }),
+      });
+      if (!res.ok) throw new Error('API Rejection');
+      alert('Access Revoked.');
+      await fetchStaff();
+    } catch (err) {
+      alert('Termination failed.');
+    }
   };
 
   const handleLogout = async () => {
@@ -126,17 +140,16 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-white transition-colors relative">
 
-      {/* Staff Management Modal */}
       {showStaffModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] w-full max-w-4xl shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-6">
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] w-full max-w-4xl shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto text-white">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-6 text-white">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-600/20 rounded-lg text-blue-500">
                   <Shield size={24}/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-black uppercase tracking-tighter">Personnel Directory</h2>
+                  <h2 className="text-xl font-black uppercase tracking-tighter text-white">Personnel Directory</h2>
                   <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Admin Oversight Module</p>
                 </div>
               </div>
@@ -146,7 +159,6 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-12">
-              {/* List Section */}
               <div className="space-y-6">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Active Deployments</h3>
                 <div className="space-y-3">
@@ -163,15 +175,16 @@ export default function AdminDashboard() {
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => copyToClipboard(s.email)} className="text-slate-600 hover:text-blue-400 transition-colors">
-                        {copied ? <Check size={14}/> : <Copy size={14}/>}
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleDeleteStaff(s.id, s.email)} className="p-2 text-slate-700 hover:text-red-500 transition-colors">
+                          <Trash2 size={16}/>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Create Section */}
               <div className="bg-slate-950 p-8 rounded-3xl border border-slate-800/50 space-y-6">
                 <div>
                   <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">Initialize New Agent</h3>
@@ -179,18 +192,18 @@ export default function AdminDashboard() {
                 </div>
                 <form onSubmit={handleCreateStaff} className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Work Email</label>
-                    <input required type="email" placeholder="agent@cepheus.co.in" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
+                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 text-white">Work Email</label>
+                    <input required type="email" placeholder="agent@cepheus.co.in" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Access Protocol Key (Pass)</label>
+                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 text-white">Access Protocol Key (Pass)</label>
                     <div className="relative">
-                      <input required type="text" placeholder="Min 8 characters" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm font-mono" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
+                      <input required type="text" placeholder="Min 8 characters" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm font-mono text-white" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
                       <Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700" size={16} />
                     </div>
                   </div>
                   <button disabled={creatingStaff} type="submit" className="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50">
-                    {creatingStaff ? <Loader2 className="animate-spin mx-auto"/> : 'Deploy Account'}
+                    {creatingStaff ? <Loader2 className="animate-spin mx-auto text-white"/> : 'Deploy Account'}
                   </button>
                 </form>
               </div>
@@ -211,17 +224,15 @@ export default function AdminDashboard() {
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-
           {profile?.role === 'SUPER_ADMIN' && (
             <button
               onClick={() => setShowStaffModal(true)}
               className="p-2 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 px-3"
             >
               <Users size={18} />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Staff</span>
+              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline text-white">Staff</span>
             </button>
           )}
-
           <button
             onClick={handleLogout}
             className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
@@ -244,7 +255,6 @@ export default function AdminDashboard() {
                   </span>
                 </div>
               </div>
-
               <div className="space-y-4 flex-1 bg-slate-900/50 p-3 rounded-2xl border border-slate-800/50 overflow-y-auto min-h-[500px]">
                 {bookings.filter(b => b.status === col.id).map(booking => (
                   <Link key={booking.id} href={`/admin/job/${booking.id}`}>
@@ -257,21 +267,19 @@ export default function AdminDashboard() {
                       </div>
                       <h4 className="font-bold text-sm text-slate-200 mb-1 group-hover:text-blue-400 transition-colors">{booking.customer_name}</h4>
                       <p className="text-[11px] text-slate-500 font-medium">{booking.device_brand} {booking.device_model}</p>
-
-                      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-white">
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest group-hover:text-white transition-colors">
                           Manage Job →
                         </span>
-                        <span className="text-[9px] font-bold text-slate-600 italic">
+                        <span className="text-[9px] font-bold text-slate-600 italic text-white">
                           {new Date(booking.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                   </Link>
                 ))}
-
                 {bookings.filter(b => b.status === col.id).length === 0 && (
-                  <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-800 rounded-2xl text-slate-700 text-[10px] font-black uppercase tracking-widest italic">
+                  <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-800 rounded-2xl text-slate-700 text-[10px] font-black uppercase tracking-widest italic text-white">
                     Empty Stage
                   </div>
                 )}

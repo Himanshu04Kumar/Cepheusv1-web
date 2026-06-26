@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { ArrowLeft, Plus, Loader2, LogOut, Users, X } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,8 +11,10 @@ import { supabase } from '@/lib/supabase';
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [staffList, setStaffList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showStaffModal, setShowStaffModal] = useState(false);
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
 
   // Staff creation form
@@ -30,6 +32,16 @@ export default function AdminDashboard() {
     { id: 'DELIVERED', title: 'Completed' },
   ];
 
+  const fetchStaff = async () => {
+    const { data } = await supabase.from('admin_profiles').select('*').order('created_at', { ascending: false });
+    if (data) setStaffList(data);
+  };
+
+  const fetchBookings = async () => {
+    const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+    if (data) setBookings(data);
+  };
+
   useEffect(() => {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -38,7 +50,6 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Get user role
       const { data: prof } = await supabase
         .from('admin_profiles')
         .select('*')
@@ -46,16 +57,10 @@ export default function AdminDashboard() {
         .single();
 
       setProfile(prof);
-      fetchBookings();
-    }
-
-    async function fetchBookings() {
-      const { data } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (data) setBookings(data);
+      await fetchBookings();
+      if (prof?.role === 'SUPER_ADMIN') {
+        await fetchStaff();
+      }
       setLoading(false);
     }
 
@@ -87,8 +92,9 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      alert('Employee account created successfully!');
-      setShowStaffModal(false);
+
+      alert(`Account Deployed!\nEmail: ${staffEmail}\nInitial Key: ${staffPass}`);
+      await fetchStaff();
       setStaffEmail('');
       setStaffPass('');
     } catch (err) {
@@ -96,6 +102,12 @@ export default function AdminDashboard() {
     } finally {
       setCreatingStaff(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleLogout = async () => {
@@ -116,25 +128,73 @@ export default function AdminDashboard() {
 
       {/* Staff Management Modal */}
       {showStaffModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-black uppercase tracking-tighter">Add Employee</h2>
-              <button onClick={() => setShowStaffModal(false)} className="text-slate-500 hover:text-white"><X size={24}/></button>
-            </div>
-            <form onSubmit={handleCreateStaff} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
-                <input required type="email" className="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] w-full max-w-4xl shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-600/20 rounded-lg text-blue-500">
+                  <Shield size={24}/>
+                </div>
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-tighter">Personnel Directory</h2>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Admin Oversight Module</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Initial Password</label>
-                <input required type="text" className="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
-              </div>
-              <button disabled={creatingStaff} type="submit" className="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all disabled:opacity-50">
-                {creatingStaff ? <Loader2 className="animate-spin mx-auto"/> : 'Deploy Account'}
+              <button onClick={() => setShowStaffModal(false)} className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-500 hover:text-white">
+                <X size={24}/>
               </button>
-            </form>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-12">
+              {/* List Section */}
+              <div className="space-y-6">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Active Deployments</h3>
+                <div className="space-y-3">
+                  {staffList.map((s) => (
+                    <div key={s.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between group hover:border-blue-500/30 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-black text-slate-400 group-hover:text-blue-400">
+                          {s.email.substring(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-300">{s.email}</p>
+                          <p className={`text-[9px] font-black tracking-widest uppercase ${s.role === 'SUPER_ADMIN' ? 'text-blue-500' : 'text-slate-600'}`}>
+                            {s.role.replace('_', ' ')}
+                          </p>
+                        </div>
+                      </div>
+                      <button onClick={() => copyToClipboard(s.email)} className="text-slate-600 hover:text-blue-400 transition-colors">
+                        {copied ? <Check size={14}/> : <Copy size={14}/>}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Create Section */}
+              <div className="bg-slate-950 p-8 rounded-3xl border border-slate-800/50 space-y-6">
+                <div>
+                  <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">Initialize New Agent</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Create a secure login for a new technician or front-desk employee.</p>
+                </div>
+                <form onSubmit={handleCreateStaff} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Work Email</label>
+                    <input required type="email" placeholder="agent@cepheus.co.in" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Access Protocol Key (Pass)</label>
+                    <div className="relative">
+                      <input required type="text" placeholder="Min 8 characters" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm font-mono" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
+                      <Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700" size={16} />
+                    </div>
+                  </div>
+                  <button disabled={creatingStaff} type="submit" className="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50">
+                    {creatingStaff ? <Loader2 className="animate-spin mx-auto"/> : 'Deploy Account'}
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
       )}

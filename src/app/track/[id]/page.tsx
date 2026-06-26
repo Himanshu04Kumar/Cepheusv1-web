@@ -21,6 +21,17 @@ export default function TrackingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Utility to format date to Indian Standard (DD/MM/YYYY)
+  const formatToIndianDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   useEffect(() => {
     async function fetchData() {
       if (!idString) {
@@ -33,7 +44,6 @@ export default function TrackingPage() {
         setError(null);
 
         // Fetch Booking - Flexible search to handle both full UUID and short 8-char codes
-        // We cast the UUID column to text to allow partial matching
         const { data: bData, error: bError } = await supabase
           .from('bookings')
           .select('*')
@@ -155,7 +165,7 @@ export default function TrackingPage() {
         </div>
         <h1 className="text-2xl font-black uppercase tracking-tighter mb-2 text-white">Booking Not Found</h1>
         <p className="text-slate-400 mb-8 max-w-md mx-auto">
-          We couldn't find a record for ID: <span className="text-blue-400 font-mono">{idString}</span>.
+          We couldn't find a record matching your criteria. Please ensure the details are correct.
         </p>
         <Link href="/" className="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all">
           Return to Homepage
@@ -200,7 +210,7 @@ export default function TrackingPage() {
               </div>
               <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl text-white">
                 <Calendar size={12} className="text-slate-500"/>
-                <span className="text-[10px] font-bold text-white">{new Date(booking?.created_at).toLocaleDateString()}</span>
+                <span className="text-[10px] font-bold text-white">{formatToIndianDate(booking?.created_at)}</span>
               </div>
             </div>
           </div>

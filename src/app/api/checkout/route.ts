@@ -5,15 +5,16 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { customer_name, customer_phone, device_brand, device_model, issue_description, pickup_address, pickup_slot } = body;
+
+    // Initialize Razorpay inside the handler to prevent build-time errors
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID || 'placeholder',
+      key_secret: process.env.RAZORPAY_KEY_SECRET || 'placeholder',
+    });
 
     // 1. Create a draft booking in Supabase
     const { data: booking, error } = await (supabaseAdmin as any)

@@ -29,14 +29,14 @@ export default function TrackSearchPage() {
     setError(null);
 
     try {
-      // Find the booking ID based on phone and date
-      // We look for bookings where customer_phone matches and created_at starts with the chosen date
+      // STRICT SEARCH: Both mobile number AND date must match exactly
+      // We look for bookings where customer_phone matches and created_at is within that 24hr window
       const { data, error } = await supabase
         .from('bookings')
         .select('id')
         .eq('customer_phone', phone)
-        .gte('created_at', `${date}T00:00:00Z`)
-        .lte('created_at', `${date}T23:59:59Z`)
+        .gte('created_at', `${date}T00:00:00.000Z`)
+        .lte('created_at', `${date}T23:59:59.999Z`)
         .maybeSingle();
 
       if (error) throw error;
@@ -44,10 +44,10 @@ export default function TrackSearchPage() {
       if (data) {
         router.push(`/track/${data.id}`);
       } else {
-        setError('No repair found for this mobile number and date.');
+        setError('No matching repair found for this mobile number on that date.');
       }
     } catch (err: any) {
-      setError('Search failed. Please check your connection.');
+      setError('Search failed. Please ensure your details are correct.');
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function TrackSearchPage() {
         </div>
 
         {/* Toggle Switch */}
-        <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800">
+        <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800 shadow-xl">
           <button
             onClick={() => setSearchMode('id')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${searchMode === 'id' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
@@ -101,26 +101,34 @@ export default function TrackSearchPage() {
           </form>
         ) : (
           <form onSubmit={handleMobileSearch} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="relative">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-              <input
-                required
-                type="tel"
-                placeholder="Mobile Number"
-                className="w-full p-5 pl-12 bg-slate-900 border border-slate-800 rounded-3xl text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Registered Mobile</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                <input
+                  required
+                  type="tel"
+                  placeholder="e.g. 9988776655"
+                  className="w-full p-5 pl-12 bg-slate-900 border border-slate-800 rounded-3xl text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="relative">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-              <input
-                required
-                type="date"
-                className="w-full p-5 pl-12 bg-slate-900 border border-slate-800 rounded-3xl text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Booking Date</label>
+              <div className="relative">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                <input
+                  required
+                  type="date"
+                  className="w-full p-5 pl-12 bg-slate-900 border border-slate-800 rounded-3xl text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none"
+                  style={{ colorScheme: 'dark' }}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
             </div>
 
             {error && (
@@ -140,8 +148,8 @@ export default function TrackSearchPage() {
         )}
 
         <div className="text-center pt-8">
-          <p className="text-[10px] text-slate-600 uppercase font-black tracking-widest leading-relaxed">
-            Forgot your details? <br/> Check the confirmation email sent to you after booking.
+          <p className="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em] leading-relaxed">
+            Authentication Protocol: Strictly matching both <br/> mobile and date for secure retrieval.
           </p>
         </div>
       </div>

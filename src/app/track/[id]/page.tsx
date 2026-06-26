@@ -23,13 +23,17 @@ export default function TrackingPage() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!id) return;
+      if (!id) {
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
         setError(null);
 
         // Fetch Booking
+        console.log('Fetching booking for ID:', id);
         const { data: bData, error: bError } = await supabase
           .from('bookings')
           .select('*')
@@ -37,11 +41,15 @@ export default function TrackingPage() {
           .maybeSingle();
 
         if (bError) throw bError;
+
         if (!bData) {
+          console.warn('No booking found for ID:', id);
           setBooking(null);
           setLoading(false);
           return;
         }
+
+        console.log('Booking found:', bData);
         setBooking(bData);
 
         // Fetch Photos
@@ -83,6 +91,13 @@ export default function TrackingPage() {
         .eq('id', approvalRequest.id);
 
       if (error) throw error;
+
+      // Also update booking status
+      await supabase
+        .from('bookings')
+        .update({ status: 'IN_REPAIR' } as any)
+        .eq('id', id);
+
       window.location.reload();
     } catch (err: any) {
       alert(`Approval failed: ${err.message}`);
@@ -98,6 +113,12 @@ export default function TrackingPage() {
         .eq('id', approvalRequest.id);
 
       if (error) throw error;
+
+      await supabase
+        .from('bookings')
+        .update({ status: 'DECLINED' } as any)
+        .eq('id', id);
+
       window.location.reload();
     } catch (err: any) {
       alert(`Decline failed: ${err.message}`);
@@ -109,7 +130,7 @@ export default function TrackingPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="animate-spin text-blue-500" size={48} />
-          <p className="text-sm font-medium animate-pulse">Fetching your repair status...</p>
+          <p className="text-sm font-medium animate-pulse uppercase tracking-widest">Locating Repair Record...</p>
         </div>
       </div>
     );
@@ -119,10 +140,10 @@ export default function TrackingPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-8 text-center text-white">
         <AlertCircle size={48} className="text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
+        <h1 className="text-2xl font-bold mb-2">Sync Error</h1>
         <p className="text-slate-400 mb-8">{error}</p>
         <button onClick={() => window.location.reload()} className="bg-blue-600 px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
-          Try Again
+          Retry Sync
         </button>
       </div>
     );
@@ -131,9 +152,17 @@ export default function TrackingPage() {
   if (!booking) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-8 text-center text-white">
-        <h1 className="text-2xl font-bold mb-4">Booking Not Found</h1>
-        <p className="text-slate-400 mb-8">We couldn't find a repair order with ID: {id}</p>
-        <Link href="/" className="text-blue-500 hover:underline font-bold">Return to Homepage</Link>
+        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
+          <AlertCircle size={32} className="text-red-500" />
+        </div>
+        <h1 className="text-2xl font-black uppercase tracking-tighter mb-2">Booking Not Found</h1>
+        <p className="text-slate-400 mb-8 max-w-md mx-auto">
+          We couldn't find a record for ID: <span className="text-blue-400 font-mono">{id}</span>. <br/>
+          Please check if the payment was successful.
+        </p>
+        <Link href="/" className="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all">
+          Return to Homepage
+        </Link>
       </div>
     );
   }
@@ -149,7 +178,7 @@ export default function TrackingPage() {
 
   const timelineItems = statuses.map((s, i) => ({
     status: s.replace('_', ' '),
-    date: i <= currentIdx ? (i === currentIdx ? 'In Progress' : 'Completed') : '-',
+    date: i <= currentIdx ? (i === currentIdx ? 'Active' : 'Completed') : '-',
     completed: i < currentIdx,
     active: i === currentIdx
   })).filter(item => item.status !== 'PENDING PAYMENT');
@@ -161,29 +190,29 @@ export default function TrackingPage() {
           <Link href="/" className="text-slate-400 hover:text-white transition-colors">
             <ArrowLeft size={24} />
           </Link>
-          <h1 className="text-2xl font-bold">Repair Status</h1>
+          <h1 className="text-2xl font-black uppercase tracking-tighter">Repair Status</h1>
         </div>
 
         {/* Status Card */}
         <div className="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
-              <p className="text-xs text-slate-500 uppercase tracking-widest font-black mb-1">Booking ID</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mb-1">Repair Identifier</p>
               <h2 className="text-2xl font-mono font-bold text-blue-400 uppercase tracking-tighter">{id.slice(0, 8)}</h2>
             </div>
-            <div className="bg-blue-500/10 text-blue-400 px-4 py-1.5 rounded-full text-xs font-black tracking-widest border border-blue-500/20 uppercase">
+            <div className="bg-blue-500/10 text-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border border-blue-500/20 uppercase">
               {currentStatus.replace('_', ' ')}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-8 py-6 border-t border-slate-800">
             <div>
-              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Device</p>
-              <p className="font-semibold text-slate-200">{booking.device_brand} {booking.device_model}</p>
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Hardware</p>
+              <p className="font-bold text-slate-200">{booking.device_brand} {booking.device_model}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 uppercase font-bold mb-1">Booked On</p>
-              <p className="font-semibold text-slate-200">{new Date(booking.created_at).toLocaleDateString()}</p>
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Logged On</p>
+              <p className="font-bold text-slate-200">{new Date(booking.created_at).toLocaleDateString()}</p>
             </div>
           </div>
         </div>
@@ -210,12 +239,12 @@ export default function TrackingPage() {
           <div className="bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-800 space-y-6">
             <h3 className="font-bold flex items-center gap-2 text-white">
               <Camera size={18} className="text-blue-500" />
-              Repair Photo Log
+              <span className="uppercase text-sm tracking-widest">Evidence Log</span>
             </h3>
 
             {photos.length === 0 ? (
               <div className="bg-slate-950/50 p-12 rounded-xl border border-dashed border-slate-800 text-center">
-                <p className="text-sm text-slate-500 font-medium">No photos uploaded yet. Your technician will add proof at each stage.</p>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Awaiting Stages...</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">

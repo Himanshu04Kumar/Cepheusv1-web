@@ -29,7 +29,9 @@ export default function BookingPage() {
     script.async = true;
     document.body.appendChild(script);
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -60,21 +62,26 @@ export default function BookingPage() {
         }),
       });
 
-      const order = await res.json();
+      const data = await res.json();
 
-      if (!res.ok) throw new Error(order.error || 'Failed to create order');
+      if (!res.ok) throw new Error(data.error || 'Failed to create order');
 
       // 2. Open Razorpay Checkout
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
+        amount: data.amount,
+        currency: data.currency,
         name: 'Cepheus Repair',
         description: 'Booking Fee',
-        order_id: order.order_id,
+        order_id: data.order_id,
         handler: function (response: any) {
-          // Success! Redirect to tracking
-          router.push(`/track/${order.booking_id}`);
+          // Success! Redirect using the REAL booking_id from Supabase
+          router.push(`/track/${data.booking_id}`);
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+          }
         },
         prefill: {
           name: formData.name,
@@ -89,8 +96,8 @@ export default function BookingPage() {
       rzp.open();
 
     } catch (error: any) {
+      console.error('Booking error:', error);
       alert(`Error: ${error.message}`);
-    } finally {
       setLoading(false);
     }
   };

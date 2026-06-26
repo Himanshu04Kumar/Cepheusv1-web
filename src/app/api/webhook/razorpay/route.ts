@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import { logToSheets } from '@/lib/sheets';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const body = await req.text();

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Camera, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Camera, Loader2, AlertCircle, Phone, Calendar, Hash } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Timeline } from '@/components/Timeline';
@@ -33,7 +33,6 @@ export default function TrackingPage() {
         setError(null);
 
         // Fetch Booking
-        console.log('Fetching booking for ID:', id);
         const { data: bData, error: bError } = await supabase
           .from('bookings')
           .select('*')
@@ -43,13 +42,11 @@ export default function TrackingPage() {
         if (bError) throw bError;
 
         if (!bData) {
-          console.warn('No booking found for ID:', id);
           setBooking(null);
           setLoading(false);
           return;
         }
 
-        console.log('Booking found:', bData);
         setBooking(bData);
 
         // Fetch Photos
@@ -72,7 +69,6 @@ export default function TrackingPage() {
         if (aData) setApprovalRequest(aData);
 
       } catch (err: any) {
-        console.error('Error fetching tracking data:', err);
         setError(err.message || 'Failed to load tracking data');
       } finally {
         setLoading(false);
@@ -85,6 +81,7 @@ export default function TrackingPage() {
   const handleApprove = async () => {
     if (!approvalRequest) return;
     try {
+      // Logic would be moved to secure API for production, keeping here for MVP UX
       const { error } = await supabase
         .from('approval_requests')
         .update({ status: 'APPROVED', responded_at: new Date().toISOString() } as any)
@@ -92,7 +89,6 @@ export default function TrackingPage() {
 
       if (error) throw error;
 
-      // Also update booking status
       await supabase
         .from('bookings')
         .update({ status: 'IN_REPAIR' } as any)
@@ -157,8 +153,7 @@ export default function TrackingPage() {
         </div>
         <h1 className="text-2xl font-black uppercase tracking-tighter mb-2">Booking Not Found</h1>
         <p className="text-slate-400 mb-8 max-w-md mx-auto">
-          We couldn't find a record for ID: <span className="text-blue-400 font-mono">{id}</span>. <br/>
-          Please check if the payment was successful.
+          We couldn't find a record for ID: <span className="text-blue-400 font-mono">{id}</span>.
         </p>
         <Link href="/" className="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all">
           Return to Homepage
@@ -167,7 +162,6 @@ export default function TrackingPage() {
     );
   }
 
-  // Generate timeline based on status
   const statuses = [
     'PENDING_PAYMENT', 'BOOKED', 'PICKED_UP', 'DIAGNOSING',
     'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'DELIVERED'
@@ -186,33 +180,48 @@ export default function TrackingPage() {
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-8 text-white transition-colors">
       <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-slate-400 hover:text-white transition-colors">
-            <ArrowLeft size={24} />
+        <div className="flex flex-col gap-4">
+          <Link href="/" className="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+            <ArrowLeft size={20} /> <span className="text-xs uppercase font-bold tracking-widest">Home</span>
           </Link>
-          <h1 className="text-2xl font-black uppercase tracking-tighter">Repair Status</h1>
+
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <h1 className="text-3xl font-black uppercase tracking-tighter">Repair Status</h1>
+            <div className="flex flex-wrap gap-3">
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
+                <Hash size={12} className="text-slate-500"/>
+                <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-tighter">{id.slice(0, 8)}</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
+                <Phone size={12} className="text-slate-500"/>
+                <span className="text-[10px] font-bold">{booking?.customer_phone}</span>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
+                <Calendar size={12} className="text-slate-500"/>
+                <span className="text-[10px] font-bold">{new Date(booking?.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Status Card */}
-        <div className="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
+        <div className="bg-slate-900 p-6 rounded-3xl shadow-2xl border border-slate-800 overflow-hidden relative group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-600/10 transition-colors" />
+
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mb-1">Repair Identifier</p>
-              <h2 className="text-2xl font-mono font-bold text-blue-400 uppercase tracking-tighter">{id.slice(0, 8)}</h2>
-            </div>
             <div className="bg-blue-500/10 text-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border border-blue-500/20 uppercase">
               {currentStatus.replace('_', ' ')}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 py-6 border-t border-slate-800">
+          <div className="grid grid-cols-2 gap-8 py-6 border-t border-slate-800/50">
             <div>
-              <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Hardware</p>
-              <p className="font-bold text-slate-200">{booking.device_brand} {booking.device_model}</p>
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Hardware Instance</p>
+              <p className="text-lg font-bold text-slate-200">{booking.device_brand} {booking.device_model}</p>
             </div>
-            <div>
-              <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Logged On</p>
-              <p className="font-bold text-slate-200">{new Date(booking.created_at).toLocaleDateString()}</p>
+            <div className="text-right md:text-left">
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Ownership</p>
+              <p className="text-lg font-bold text-slate-200">{booking.customer_name}</p>
             </div>
           </div>
         </div>
@@ -231,37 +240,37 @@ export default function TrackingPage() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg">
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
             <Timeline items={timelineItems} />
           </div>
 
-          {/* Photo Log */}
-          <div className="bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-800 space-y-6">
+          <div className="bg-slate-900 p-6 rounded-3xl shadow-2xl border border-slate-800 space-y-6">
             <h3 className="font-bold flex items-center gap-2 text-white">
               <Camera size={18} className="text-blue-500" />
-              <span className="uppercase text-sm tracking-widest">Evidence Log</span>
+              <span className="uppercase text-xs tracking-[0.2em] font-black">Visual Proof Log</span>
             </h3>
 
             {photos.length === 0 ? (
-              <div className="bg-slate-950/50 p-12 rounded-xl border border-dashed border-slate-800 text-center">
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Awaiting Stages...</p>
+              <div className="bg-slate-950/50 p-12 rounded-2xl border border-dashed border-slate-800 text-center">
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Technician evidence pending</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {photos.map((photo, i) => (
                   <div key={i} className="space-y-2 group">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
-                      <img src={photo.photo_url} alt={photo.stage} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                    <div className="relative aspect-video overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+                      <img src={photo.photo_url} alt={photo.stage} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                      <p className="absolute bottom-3 left-4 text-[9px] font-black uppercase text-white tracking-widest">{photo.stage.replace('_', ' ')}</p>
                     </div>
-                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">{photo.stage.replace('_', ' ')}</p>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10">
-              <p className="text-[11px] text-blue-400 italic leading-relaxed">
-                <strong>Radical Transparency:</strong> We provide photographic evidence of parts removed and installed to ensure your total peace of mind.
+            <div className="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10">
+              <p className="text-[10px] text-blue-400/80 italic leading-relaxed font-medium">
+                <strong>Protocol:</strong> All parts removed and installed are documented via photographic evidence to ensure 100% transparency.
               </p>
             </div>
           </div>

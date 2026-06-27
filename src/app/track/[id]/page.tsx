@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
@@ -66,7 +66,6 @@ export default function AdvancedTrackingPage() {
     if (option.option_name.includes('CALL US')) {
       return alert('Request Received! Our technical lead will call your registered number shortly.');
     }
-
     try {
       const res = await fetch('/api/checkout/final', {
         method: 'POST',
@@ -74,8 +73,6 @@ export default function AdvancedTrackingPage() {
         body: JSON.stringify({ action: 'CREATE_ORDER', bookingId: booking.id, amount: option.price }),
       });
       const order = await res.json();
-      if (!res.ok) throw new Error(order.error);
-
       new Razorpay({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
@@ -92,9 +89,7 @@ export default function AdvancedTrackingPage() {
         },
         theme: { color: '#2563eb' }
       }).open();
-    } catch (e) {
-      alert('Payment Initialization Failed.');
-    }
+    } catch (e) { alert('Payment Initialization Failed.'); }
   };
 
   if (loading) return (
@@ -123,7 +118,7 @@ export default function AdvancedTrackingPage() {
           <h1 className="text-4xl font-black uppercase tracking-tighter text-blue-500">Repair Status</h1>
           <div className="flex flex-wrap gap-3">
               <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
-                <Hash size={12} className="text-slate-500"/><span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-tighter">{booking.id.slice(0, 8)}</span>
+                <Hash size={12} className="text-slate-500"/><span className="text-[10px] font-mono font-bold text-blue-400 uppercase">{booking.id.slice(0, 8)}</span>
               </div>
               <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
                 <Phone size={12} className="text-slate-500"/><span className="text-[10px] font-bold text-slate-200">{booking?.customer_phone}</span>
@@ -137,7 +132,7 @@ export default function AdvancedTrackingPage() {
         <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-600/10 transition-colors" />
            <div className="flex justify-between items-start mb-8">
-              <div className="bg-blue-600 px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">{booking.status.replace(/_/g, ' ')}</div>
+              <div className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${booking.status === 'DELIVERED' ? 'bg-green-600' : 'bg-blue-600'}`}>{booking.status.replace(/_/g, ' ')}</div>
            </div>
            <div className="grid md:grid-cols-2 gap-8">
               <div><p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Hardware</p><p className="text-xl font-bold text-slate-200 uppercase">{booking.device_brand} {booking.device_model}</p></div>
@@ -153,7 +148,7 @@ export default function AdvancedTrackingPage() {
 
           {['PICKED_UP', 'DIAGNOSING', 'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(booking.status) && (
             <EventCard icon={<Package className="text-blue-500" />} title="Device Picked Up" date="Verified">
-               <p className="text-xs text-slate-400">Hardware has been retrieved and is en route to our facility.</p>
+               <p className="text-xs text-slate-400">Hardware has been retrieved and is en route to our specialized partner facility.</p>
             </EventCard>
           )}
 
@@ -184,19 +179,30 @@ export default function AdvancedTrackingPage() {
             </EventCard>
           )}
 
-          {['OUT_FOR_DELIVERY', 'DELIVERED'].includes(booking.status) && (
+          {/* OUT FOR DELIVERY: Shows only during the actual delivery journey */}
+          {booking.status === 'OUT_FOR_DELIVERY' && (
             <EventCard icon={<Truck className="text-orange-500 animate-bounce" />} title="Out For Delivery" date="Live Logistics">
-               <div className="bg-orange-500/5 border border-orange-500/20 p-6 rounded-3xl space-y-3">
+               <div className="bg-orange-500/5 border border-orange-500/20 p-6 rounded-3xl space-y-3 shadow-xl">
                  <p className="text-xs text-orange-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                   Estimated Delivery: <span>{booking.pickup_slot}</span>
+                   Estimated Window: <span>{booking.pickup_slot}</span>
                  </p>
-                 <p className="text-[11px] text-slate-400">Our delivery partner is currently navigating to your address with your repaired hardware.</p>
+                 <p className="text-[11px] text-slate-400">Our delivery partner is navigating to your address. Please ensure someone is available to receive the hardware.</p>
+               </div>
+            </EventCard>
+          )}
+
+          {/* DELIVERED: The final event when the truck reaches the bottom */}
+          {booking.status === 'DELIVERED' && (
+            <EventCard icon={<CheckCircle className="text-green-500" />} title="Hardware Delivered" date="Success">
+               <div className="bg-green-500/5 border border-green-500/20 p-6 rounded-3xl space-y-3 shadow-xl">
+                 <p className="text-xs text-green-400 font-bold uppercase tracking-widest">Handover Confirmed</p>
+                 <p className="text-[11px] text-slate-400">Repair mission complete. Your hardware has been successfully returned and verified at your doorstep.</p>
                </div>
             </EventCard>
           )}
 
           {parts.length > 0 && (
-            <EventCard icon={<Camera className="text-purple-500" />} title="Visual Proof Log" date="Live Updates">
+            <EventCard icon={<Camera className="text-purple-500" />} title="Visual Proof Log" date="Verified Evidence">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {parts.map((p, i) => (
                    <div key={i} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl group">

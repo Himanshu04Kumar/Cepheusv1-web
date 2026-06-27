@@ -26,7 +26,6 @@ export default function AdvancedAdminManagement() {
       const { data } = await supabase.from('bookings').select('*').eq('id', id).single();
       setBooking(data);
 
-      // Also fetch existing options if they exist
       const { data: optData } = await supabase.from('repair_options').select('*').eq('booking_id', id);
       if (optData && optData.length > 0) {
         setOptions(optData.map(o => ({ option_name: o.option_name, description: o.description, price: o.price })));
@@ -45,16 +44,12 @@ export default function AdvancedAdminManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, bookingId: id, data }),
       });
-
       const result = await res.json();
-
       if (!res.ok) throw new Error(result.error || 'API Rejection');
-
       setStatusMsg('Success! Registry Updated.');
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       setStatusMsg(`API Error: ${err.message}`);
-      console.error(err);
     }
   };
 
@@ -75,7 +70,6 @@ export default function AdvancedAdminManagement() {
   };
 
   const addOption = () => {
-    // Correctly append a new empty option without touching existing ones
     setOptions(prev => [...prev, { option_name: '', description: '', price: '' }]);
   };
 
@@ -102,8 +96,27 @@ export default function AdvancedAdminManagement() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* NEW CONTEXT BAR: Missing details restored here */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl">
+             <p className="text-[10px] text-slate-500 uppercase font-black mb-1 tracking-widest">Hardware</p>
+             <p className="text-xs font-bold text-slate-200">{booking?.device_brand} {booking?.device_model}</p>
+           </div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl">
+             <p className="text-[10px] text-slate-500 uppercase font-black mb-1 tracking-widest">Mobile</p>
+             <p className="text-xs font-bold text-white">{booking?.customer_phone}</p>
+           </div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl">
+             <p className="text-[10px] text-slate-500 uppercase font-black mb-1 tracking-widest">Booking Date</p>
+             <p className="text-xs font-bold text-white">{new Date(booking?.created_at).toLocaleDateString('en-IN')}</p>
+           </div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl">
+             <p className="text-[10px] text-slate-500 uppercase font-black mb-1 tracking-widest">Registry ID</p>
+             <p className="text-xs font-mono font-bold text-blue-400 uppercase">{id.slice(0,8)}</p>
+           </div>
+        </div>
 
+        <div className="grid lg:grid-cols-3 gap-8">
           {/* COLUMN 1: STAGE CONTROL */}
           <div className="space-y-6">
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
@@ -125,14 +138,13 @@ export default function AdvancedAdminManagement() {
             </div>
           </div>
 
-          {/* COLUMN 2: OPTIONS GATE (EVENT 4) */}
+          {/* COLUMN 2: OPTIONS GATE */}
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-sm font-black uppercase tracking-widest text-amber-500 flex items-center gap-2"><AlertCircle size={16}/> Transparency Gate (Repair Options)</h2>
                 <button onClick={addOption} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all"><Plus size={16}/></button>
               </div>
-
               <div className="space-y-4">
                 {options.map((opt, i) => (
                   <div key={i} className="grid grid-cols-12 gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 relative group">
@@ -146,10 +158,9 @@ export default function AdvancedAdminManagement() {
               <button onClick={() => runAction('PUBLISH_OPTIONS', { options })} className="w-full bg-amber-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-500 transition-all shadow-lg">Publish Options to Customer</button>
             </div>
 
-            {/* COLUMN 3: VISUAL PROOF (EVENT 5) */}
+            {/* COLUMN 3: VISUAL PROOF */}
             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6">
               <h2 className="text-sm font-black uppercase tracking-widest text-purple-500 flex items-center gap-2"><Camera size={16}/> Evidence Documentation</h2>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3">
                    <p className="text-[10px] font-black text-slate-500 uppercase ml-2">Condition / Before</p>
@@ -166,12 +177,10 @@ export default function AdvancedAdminManagement() {
                    </label>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                  <input placeholder="Part Name (e.g. Battery)" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
                  <input placeholder="Serial Number" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
               </div>
-
               <button onClick={() => runAction('DOCUMENT_PART', {
                 removed_part_name: partDoc.name,
                 removed_part_photo: partDoc.removed_photo,

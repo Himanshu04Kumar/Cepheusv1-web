@@ -11,16 +11,23 @@ export async function POST(req: Request) {
     if (action === 'UPDATE_STATUS') {
       const updateData = { status: data.status };
 
-      // If setting out for delivery, also save estimated window
+      // Ensure 'OUT_FOR_DELIVERY' saves the delivery window
       if (data.status === 'OUT_FOR_DELIVERY' && data.deliveryWindow) {
-        updateData.pickup_slot = data.deliveryWindow; // Reusing slot field for delivery info
+        updateData.pickup_slot = data.deliveryWindow;
+      }
+
+      // Special handling for 'DELIVERED' to ensure clean transition
+      if (data.status === 'DELIVERED') {
+         updateData.status = 'DELIVERED';
       }
 
       const { error } = await (supabaseAdmin as any)
         .from('bookings')
         .update(updateData)
         .eq('id', bookingId);
+
       if (error) throw error;
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'PUBLISH_OPTIONS') {
@@ -37,6 +44,7 @@ export async function POST(req: Request) {
 
       if (error) throw error;
       await (supabaseAdmin as any).from('bookings').update({ status: 'AWAITING_APPROVAL' }).eq('id', bookingId);
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'DOCUMENT_PART') {
@@ -49,6 +57,7 @@ export async function POST(req: Request) {
           installed_serial: data.serial
         });
       if (error) throw error;
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'ISSUE_WARRANTY') {
@@ -65,9 +74,10 @@ export async function POST(req: Request) {
           status: 'ACTIVE'
         });
       if (error) throw error;
+      return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: 'Unknown Action' }, { status: 400 });
   } catch (error: any) {
     console.error('Admin API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

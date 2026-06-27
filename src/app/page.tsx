@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Truck, ShieldCheck, Camera, ArrowRight, Globe, Menu, X, ChevronRight, Zap, Award, Users, MessageSquare } from 'lucide-react';
+import { Truck, ShieldCheck, Camera, ArrowRight, Globe, Menu, X, ChevronRight, Zap, Award, Users, MessageSquare, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function HomePage() {

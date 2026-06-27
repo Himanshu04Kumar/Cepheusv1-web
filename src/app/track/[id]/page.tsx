@@ -1,293 +1,304 @@
 // @ts-nocheck
 'use client';
 
-import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check, Trash2 } from 'lucide-react';
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { ArrowLeft, Clock, Camera, Loader2, AlertCircle, Phone, Calendar, Hash } from 'lucide-react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { Timeline } from '@/components/Timeline';
+import { ApprovalGate } from '@/components/ApprovalGate';
 import { supabase } from '@/lib/supabase';
 
-export default function AdminDashboard() {
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
-  const [staffList, setStaffList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showStaffModal, setShowStaffModal] = useState(false);
-  const [copied, setCopied] = useState(false);
+declare var Razorpay: any;
+
+export const dynamic = 'force-dynamic';
+
+export default function TrackingPage() {
+  const params = useParams();
+  const idString = params.id as string;
   const router = useRouter();
 
-  const [staffEmail, setStaffEmail] = useState('');
-  const [staffPass, setStaffPass] = useState('');
-  const [creatingStaff, setCreatingStaff] = useState(false);
+  const [booking, setBooking] = useState<any>(null);
+  const [photos, setPhotos] = useState<any[]>([]);
+  const [approvalRequest, setApprovalRequest] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const columns = [
-    { id: 'BOOKED', title: 'New Bookings' },
-    { id: 'PICKED_UP', title: 'Picked Up' },
-    { id: 'DIAGNOSING', title: 'Diagnosing' },
-    { id: 'AWAITING_APPROVAL', title: 'Awaiting Approval' },
-    { id: 'IN_REPAIR', title: 'In Repair' },
-    { id: 'QUALITY_CHECK', title: 'Quality Check' },
-    { id: 'DELIVERED', title: 'Completed' },
-  ];
-
-  const fetchStaff = async () => {
-    const { data } = await supabase.from('admin_profiles').select('*').order('created_at', { ascending: false });
-    if (data) setStaffList(data);
+  // Utility to format date to Indian Standard (DD/MM/YYYY)
+  const formatToIndianDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
-  const fetchBookings = async () => {
-    const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
-    if (data) setBookings(data);
-  };
+  // Load Razorpay Script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   useEffect(() => {
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login');
+    async function fetchData() {
+      if (!idString) {
+        setLoading(false);
         return;
       }
 
-      const { data: prof } = await supabase
-        .from('admin_profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        setLoading(true);
+        setError(null);
 
-      setProfile(prof);
-      await fetchBookings();
-      if (prof?.role === 'SUPER_ADMIN') {
-        await fetchStaff();
+        // Fetch Booking using the secure RPC function
+        const { data: bData, error: bError } = await supabase
+          .rpc('get_booking_by_id', { search_id: idString });
+
+        if (bError) throw bError;
+        const result = bData && bData.length > 0 ? bData[0] : null;
+
+        if (!result) {
+          setBooking(null);
+          setLoading(false);
+          return;
+        }
+
+        const realId = result.id;
+        setBooking(result);
+
+        // Fetch Photos
+        const { data: pData } = await supabase
+          .from('repair_photos')
+          .select('*')
+          .eq('booking_id', realId)
+          .order('created_at', { ascending: true });
+
+        if (pData) setPhotos(pData);
+
+        // Fetch Pending Approval
+        const { data: aData } = await supabase
+          .from('approval_requests')
+          .select('*')
+          .eq('booking_id', realId)
+          .eq('status', 'PENDING')
+          .maybeSingle();
+
+        if (aData) setApprovalRequest(aData);
+
+      } catch (err: any) {
+        console.error('Error fetching tracking data:', err);
+        setError(err.message || 'Failed to load tracking data');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
-    init();
+    fetchData();
+  }, [idString]);
 
-    const channel = supabase.channel('admin_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
-        fetchBookings();
-      })
-      .subscribe();
+  const handleApprove = async () => {
+    if (!approvalRequest || !booking) return;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [router]);
-
-  const handleCreateStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreatingStaff(true);
     try {
-      const res = await fetch('/api/admin/staff', {
+      // 1. Create a Razorpay Order for the Quoted Price via our new API
+      const res = await fetch('/api/checkout/final', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'CREATE_EMPLOYEE',
-          email: staffEmail,
-          password: staffPass
+          bookingId: booking.id,
+          amount: approvalRequest.quoted_price
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
 
-      alert(`Account Deployed!\nEmail: ${staffEmail}\nInitial Key: ${staffPass}`);
-      await fetchStaff();
-      setStaffEmail('');
-      setStaffPass('');
-    } catch (err) {
+      const order = await res.json();
+      if (!res.ok) throw new Error(order.error || 'Payment initialization failed');
+
+      // 2. Open Razorpay Checkout
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: 'INR',
+        name: 'Cepheus Repair',
+        description: 'Approval & Final Payment',
+        order_id: order.order_id,
+        handler: async function (response: any) {
+          // 3. On success, update status in database
+          await supabase
+            .from('approval_requests')
+            .update({ status: 'APPROVED', responded_at: new Date().toISOString() } as any)
+            .eq('id', approvalRequest.id);
+
+          await supabase
+            .from('bookings')
+            .update({ status: 'IN_REPAIR' } as any)
+            .eq('id', booking.id);
+
+          window.location.reload();
+        },
+        prefill: {
+          name: booking.customer_name,
+          contact: booking.customer_phone
+        },
+        theme: {
+          color: '#2563eb'
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+
+    } catch (err: any) {
       alert(`Error: ${err.message}`);
-    } finally {
-      setCreatingStaff(false);
     }
   };
 
-  const handleDeleteStaff = async (userId: string, email: string) => {
-    if (email === profile?.email) return alert("Cannot self-destruct Super Admin session.");
-    if (!confirm(`Are you sure you want to terminate access for ${email}?`)) return;
-
+  const handleDecline = async () => {
+    if (!approvalRequest || !booking) return;
     try {
-      const res = await fetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'DELETE_EMPLOYEE',
-          userId
-        }),
-      });
-      if (!res.ok) throw new Error('API Rejection');
-      alert('Access Revoked.');
-      await fetchStaff();
-    } catch (err) {
-      alert('Termination failed.');
+      await supabase
+        .from('approval_requests')
+        .update({ status: 'DECLINED', responded_at: new Date().toISOString() } as any)
+        .eq('id', approvalRequest.id);
+
+      await supabase
+        .from('bookings')
+        .update({ status: 'DECLINED' } as any)
+        .eq('id', booking.id);
+
+      window.location.reload();
+    } catch (err: any) {
+      alert(`Decline failed: ${err.message}`);
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-  };
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <Loader2 className="animate-spin text-blue-500" size={48} />
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-8 text-center text-white">
+      <AlertCircle size={48} className="text-red-500 mb-4" />
+      <h1 className="text-2xl font-bold mb-2">Sync Error</h1>
+      <p className="text-slate-400 mb-8">{error}</p>
+      <button onClick={() => window.location.reload()} className="bg-blue-600 px-6 py-2 rounded-lg font-bold">Retry Sync</button>
+    </div>
+  );
+
+  if (!booking) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-8 text-center text-white">
+      <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
+        <AlertCircle size={32} className="text-red-500" />
       </div>
-    );
-  }
+      <h1 className="text-2xl font-black uppercase tracking-tighter mb-2">Booking Not Found</h1>
+      <p className="text-slate-400 mb-8 max-w-md mx-auto">
+        We couldn't find a record matching your criteria.
+      </p>
+      <Link href="/" className="bg-white text-black px-8 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all">
+        Return to Homepage
+      </Link>
+    </div>
+  );
+
+  const statuses = ['PENDING_PAYMENT', 'BOOKED', 'PICKED_UP', 'DIAGNOSING', 'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'DELIVERED'];
+  const currentStatus = booking.status || 'BOOKED';
+  const currentIdx = statuses.indexOf(currentStatus);
+
+  const timelineItems = statuses.map((s, i) => ({
+    status: s.replace('_', ' '),
+    date: i <= currentIdx ? (i === currentIdx ? 'Active' : 'Completed') : '-',
+    completed: i < currentIdx,
+    active: i === currentIdx
+  })).filter(item => item.status !== 'PENDING PAYMENT');
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-white transition-colors relative">
+    <div className="min-h-screen bg-slate-950 p-4 md:p-8 text-white transition-colors">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex flex-col gap-4">
+          <Link href="/" className="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+            <ArrowLeft size={20} /> <span className="text-xs uppercase font-bold tracking-widest">Home</span>
+          </Link>
 
-      {showStaffModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] w-full max-w-4xl shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto text-white">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-6 text-white">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-600/20 rounded-lg text-blue-500">
-                  <Shield size={24}/>
-                </div>
-                <div>
-                  <h2 className="text-xl font-black uppercase tracking-tighter text-white">Personnel Directory</h2>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Admin Oversight Module</p>
-                </div>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <h1 className="text-3xl font-black uppercase tracking-tighter">Repair Status</h1>
+            <div className="flex flex-wrap gap-3">
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
+                <Hash size={12} className="text-slate-500"/><span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-tighter">{booking.id.slice(0, 8)}</span>
               </div>
-              <button onClick={() => setShowStaffModal(false)} className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-500 hover:text-white">
-                <X size={24}/>
-              </button>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-12">
-              <div className="space-y-6">
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Active Deployments</h3>
-                <div className="space-y-3">
-                  {staffList.map((s) => (
-                    <div key={s.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between group hover:border-blue-500/30 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-black text-slate-400 group-hover:text-blue-400">
-                          {s.email.substring(0,2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-300">{s.email}</p>
-                          <p className={`text-[9px] font-black tracking-widest uppercase ${s.role === 'SUPER_ADMIN' ? 'text-blue-500' : 'text-slate-600'}`}>
-                            {s.role.replace('_', ' ')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleDeleteStaff(s.id, s.email)} className="p-2 text-slate-700 hover:text-red-500 transition-colors">
-                          <Trash2 size={16}/>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
+                <Phone size={12} className="text-slate-500"/><span className="text-[10px] font-bold">{booking?.customer_phone}</span>
               </div>
-
-              <div className="bg-slate-950 p-8 rounded-3xl border border-slate-800/50 space-y-6">
-                <div>
-                  <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">Initialize New Agent</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Create a secure login for a new technician or front-desk employee.</p>
-                </div>
-                <form onSubmit={handleCreateStaff} className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 text-white">Work Email</label>
-                    <input required type="email" placeholder="agent@cepheus.co.in" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1 text-white">Access Protocol Key (Pass)</label>
-                    <div className="relative">
-                      <input required type="text" placeholder="Min 8 characters" className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500 transition-all text-sm font-mono text-white" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
-                      <Key className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700" size={16} />
-                    </div>
-                  </div>
-                  <button disabled={creatingStaff} type="submit" className="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50">
-                    {creatingStaff ? <Loader2 className="animate-spin mx-auto text-white"/> : 'Deploy Account'}
-                  </button>
-                </form>
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
+                <Calendar size={12} className="text-slate-500"/><span className="text-[10px] font-bold">{formatToIndianDate(booking?.created_at)}</span>
               </div>
             </div>
           </div>
         </div>
-      )}
 
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-xl">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-slate-500 hover:text-white transition-colors">
-            <ArrowLeft size={20} />
-          </Link>
-          <div className="h-8 w-px bg-slate-800" />
-          <h1 className="text-xl font-black tracking-tighter uppercase text-white">Ops Command</h1>
-          <span className="bg-blue-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-widest">Admin</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          {profile?.role === 'SUPER_ADMIN' && (
-            <button
-              onClick={() => setShowStaffModal(true)}
-              className="p-2 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 px-3"
-            >
-              <Users size={18} />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline text-white">Staff</span>
-            </button>
-          )}
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-            title="Logout"
-          >
-            <LogOut size={20} />
-          </button>
-        </div>
-      </header>
-
-      <main className="flex-1 overflow-x-auto p-6 scrollbar-thin">
-        <div className="flex gap-6 h-full min-w-max pb-4">
-          {columns.map(col => (
-            <div key={col.id} className="w-80 flex flex-col">
-              <div className="flex items-center justify-between mb-4 px-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-black text-[10px] text-slate-500 uppercase tracking-[0.2em]">{col.title}</h3>
-                  <span className="bg-slate-800 text-blue-400 text-[11px] font-black px-2 py-0.5 rounded-full border border-slate-700">
-                    {bookings.filter(b => b.status === col.id).length}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-4 flex-1 bg-slate-900/50 p-3 rounded-2xl border border-slate-800/50 overflow-y-auto min-h-[500px]">
-                {bookings.filter(b => b.status === col.id).map(booking => (
-                  <Link key={booking.id} href={`/admin/job/${booking.id}`}>
-                    <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 group hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer mb-4 text-white">
-                      <div className="flex justify-between items-start mb-3 text-white">
-                        <span className="text-[10px] font-mono text-slate-500 group-hover:text-blue-400 transition-colors uppercase tracking-tighter font-bold">
-                          {booking.id.slice(0, 8)}
-                        </span>
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                      </div>
-                      <h4 className="font-bold text-sm text-slate-200 mb-1 group-hover:text-blue-400 transition-colors">{booking.customer_name}</h4>
-                      <p className="text-[11px] text-slate-500 font-medium">{booking.device_brand} {booking.device_model}</p>
-                      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-white">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest group-hover:text-white transition-colors">
-                          Manage Job →
-                        </span>
-                        <span className="text-[9px] font-bold text-slate-600 italic text-white">
-                          {new Date(booking.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-                {bookings.filter(b => b.status === col.id).length === 0 && (
-                  <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-800 rounded-2xl text-slate-700 text-[10px] font-black uppercase tracking-widest italic text-white">
-                    Empty Stage
-                  </div>
-                )}
-              </div>
+        <div className="bg-slate-900 p-6 rounded-3xl shadow-2xl border border-slate-800">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 text-white">
+            <div className="bg-blue-500/10 text-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border border-blue-500/20 uppercase">
+              {currentStatus.replace('_', ' ')}
             </div>
-          ))}
+          </div>
+          <div className="grid grid-cols-2 gap-8 py-6 border-t border-slate-800/50">
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Hardware Instance</p>
+              <p className="text-lg font-bold text-slate-200">{booking.device_brand} {booking.device_model}</p>
+            </div>
+            <div className="text-right md:text-left">
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Ownership</p>
+              <p className="text-lg font-bold text-slate-200">{booking.customer_name}</p>
+            </div>
+          </div>
         </div>
-      </main>
+
+        {approvalRequest && (
+          <div className="animate-in fade-in zoom-in duration-500">
+            <ApprovalGate
+              diagnosis={approvalRequest.diagnosis_text}
+              parts={approvalRequest.parts_detail}
+              price={approvalRequest.quoted_price}
+              onApprove={handleApprove}
+              onDecline={handleDecline}
+            />
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl"><Timeline items={timelineItems} /></div>
+          <div className="bg-slate-900 p-6 rounded-3xl shadow-2xl border border-slate-800 space-y-6">
+            <h3 className="font-bold flex items-center gap-2 text-white">
+              <Camera size={18} className="text-blue-500" />
+              <span className="uppercase text-xs tracking-[0.2em] font-black">Visual Proof Log</span>
+            </h3>
+            {photos.length === 0 ? (
+              <div className="bg-slate-950/50 p-12 rounded-2xl border border-dashed border-slate-800 text-center">
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest text-white">Technician evidence pending</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {photos.map((photo, i) => (
+                  <div key={i} className="space-y-2 group">
+                    <div className="relative aspect-video overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+                      <img src={photo.photo_url} alt={photo.stage} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                      <p className="absolute bottom-3 left-4 text-[9px] font-black uppercase text-white tracking-widest">{photo.stage.replace('_', ' ')}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10"><p className="text-[10px] text-blue-400/80 italic leading-relaxed font-medium"><strong>Protocol:</strong> All parts removed and installed are documented via photographic evidence to ensure 100% transparency.</p></div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -19,13 +19,19 @@ export default function AdvancedAdminManagement() {
   const [options, setOptions] = useState([{ option_name: 'OEM Original', description: '', price: '' }]);
 
   // Event 5: Part Documentation State
-  const [docType, setDocType] = useState('REPLACEMENT'); // REPLACEMENT or REPAIR
   const [partDoc, setPartDoc] = useState({ name: '', removed_photo: '', installed_photo: '', manufacturer: '', serial: '', condition: '' });
 
   useEffect(() => {
     async function fetchJob() {
       const { data } = await supabase.from('bookings').select('*').eq('id', id).single();
       setBooking(data);
+
+      // Also fetch existing options if they exist
+      const { data: optData } = await supabase.from('repair_options').select('*').eq('booking_id', id);
+      if (optData && optData.length > 0) {
+        setOptions(optData.map(o => ({ option_name: o.option_name, description: o.description, price: o.price })));
+      }
+
       setLoading(false);
     }
     if (id) fetchJob();
@@ -39,15 +45,21 @@ export default function AdvancedAdminManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, bookingId: id, data }),
       });
-      if (!res.ok) throw new Error('API Rejection');
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.error || 'API Rejection');
+
       setStatusMsg('Success! Registry Updated.');
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
-      setStatusMsg('API Error: Deployment Failed');
+      setStatusMsg(`API Error: ${err.message}`);
+      console.error(err);
     }
   };
 
   const handleUpload = async (file, callback) => {
+    if (!file) return;
     setIsUploading(true);
     try {
       const path = `repairs/${id}-${Date.now()}.jpg`;
@@ -55,8 +67,22 @@ export default function AdvancedAdminManagement() {
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from('repair-evidence').getPublicUrl(path);
       callback(publicUrl);
-    } catch (e) { alert('Upload Failed'); }
-    finally { setIsUploading(false); }
+    } catch (e) {
+      alert(`Upload Failed: ${e.message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const addOption = () => {
+    // Correctly append a new empty option without touching existing ones
+    setOptions(prev => [...prev, { option_name: '', description: '', price: '' }]);
+  };
+
+  const updateOption = (index, field, value) => {
+    const newOptions = [...options];
+    newOptions[index][field] = value;
+    setOptions(newOptions);
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
@@ -104,15 +130,15 @@ export default function AdvancedAdminManagement() {
             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-sm font-black uppercase tracking-widest text-amber-500 flex items-center gap-2"><AlertCircle size={16}/> Transparency Gate (Repair Options)</h2>
-                <button onClick={() => setOptions([...options, { option_name: '', description: '', price: '' }])} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all"><Plus size={16}/></button>
+                <button onClick={addOption} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all"><Plus size={16}/></button>
               </div>
 
               <div className="space-y-4">
                 {options.map((opt, i) => (
                   <div key={i} className="grid grid-cols-12 gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 relative group">
-                    <div className="col-span-4"><input placeholder="Name (e.g. OEM)" className="w-full bg-transparent text-xs font-bold uppercase outline-none" value={opt.option_name} onChange={e => {const n = [...options]; n[i].option_name = e.target.value; setOptions(n);}}/></div>
-                    <div className="col-span-5"><input placeholder="Details..." className="w-full bg-transparent text-[10px] outline-none" value={opt.description} onChange={e => {const n = [...options]; n[i].description = e.target.value; setOptions(n);}}/></div>
-                    <div className="col-span-2"><input placeholder="Price" className="w-full bg-transparent text-xs font-black text-amber-500 outline-none" type="number" value={opt.price} onChange={e => {const n = [...options]; n[i].price = e.target.value; setOptions(n);}}/></div>
+                    <div className="col-span-4"><input placeholder="Name (e.g. OEM)" className="w-full bg-transparent text-xs font-bold uppercase outline-none text-white" value={opt.option_name} onChange={e => updateOption(i, 'option_name', e.target.value)}/></div>
+                    <div className="col-span-5"><input placeholder="Details..." className="w-full bg-transparent text-[10px] outline-none text-slate-300" value={opt.description} onChange={e => updateOption(i, 'description', e.target.value)}/></div>
+                    <div className="col-span-2"><input placeholder="Price" className="w-full bg-transparent text-xs font-black text-amber-500 outline-none" type="number" value={opt.price} onChange={e => updateOption(i, 'price', e.target.value)}/></div>
                     <div className="col-span-1 flex justify-end"><button onClick={() => setOptions(options.filter((_, idx) => idx !== i))} className="text-slate-700 hover:text-red-500"><Trash2 size={14}/></button></div>
                   </div>
                 ))}
@@ -125,7 +151,6 @@ export default function AdvancedAdminManagement() {
               <h2 className="text-sm font-black uppercase tracking-widest text-purple-500 flex items-center gap-2"><Camera size={16}/> Evidence Documentation</h2>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* Removed Part Photo */}
                 <div className="space-y-3">
                    <p className="text-[10px] font-black text-slate-500 uppercase ml-2">Condition / Before</p>
                    <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-800/50 transition-all overflow-hidden relative">
@@ -133,7 +158,6 @@ export default function AdvancedAdminManagement() {
                       <input type="file" className="hidden" onChange={e => handleUpload(e.target.files[0], (url) => setPartDoc({...partDoc, removed_photo: url}))}/>
                    </label>
                 </div>
-                {/* Installed Part Photo */}
                 <div className="space-y-3">
                    <p className="text-[10px] font-black text-slate-500 uppercase ml-2">Installed / After</p>
                    <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-800/50 transition-all overflow-hidden relative">
@@ -144,8 +168,8 @@ export default function AdvancedAdminManagement() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                 <input placeholder="Part Name (e.g. Battery)" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
-                 <input placeholder="Serial Number" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
+                 <input placeholder="Part Name (e.g. Battery)" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
+                 <input placeholder="Serial Number" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
               </div>
 
               <button onClick={() => runAction('DOCUMENT_PART', {
@@ -160,7 +184,9 @@ export default function AdvancedAdminManagement() {
         </div>
 
         {statusMsg && (
-          <div className="fixed bottom-8 right-8 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-2xl animate-in slide-in-from-right-8">
+          <div className={`fixed bottom-8 right-8 p-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-right-8 z-50 ${
+            statusMsg.includes('Error') ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'
+          }`}>
             {statusMsg}
           </div>
         )}

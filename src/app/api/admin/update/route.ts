@@ -9,30 +9,33 @@ export async function POST(req: Request) {
     const { action, bookingId, data } = await req.json();
 
     if (action === 'UPDATE_STATUS') {
+      const updateData = { status: data.status };
+
+      // If setting out for delivery, also save estimated window
+      if (data.status === 'OUT_FOR_DELIVERY' && data.deliveryWindow) {
+        updateData.pickup_slot = data.deliveryWindow; // Reusing slot field for delivery info
+      }
+
       const { error } = await (supabaseAdmin as any)
         .from('bookings')
-        .update({ status: data.status })
+        .update(updateData)
         .eq('id', bookingId);
       if (error) throw error;
     }
 
     if (action === 'PUBLISH_OPTIONS') {
-      // 1. Clear existing options to prevent duplicates
       await (supabaseAdmin as any).from('repair_options').delete().eq('booking_id', bookingId);
 
-      // 2. Insert the new set of options
       const { error } = await (supabaseAdmin as any)
         .from('repair_options')
         .insert(data.options.map(opt => ({
           booking_id: bookingId,
           option_name: opt.option_name,
           description: opt.description,
-          price: parseFloat(opt.price)
+          price: parseFloat(opt.price) || 0
         })));
 
       if (error) throw error;
-
-      // 3. Move status to AWAITING_APPROVAL
       await (supabaseAdmin as any).from('bookings').update({ status: 'AWAITING_APPROVAL' }).eq('id', bookingId);
     }
 
@@ -41,7 +44,9 @@ export async function POST(req: Request) {
         .from('part_documentation')
         .insert({
           booking_id: bookingId,
-          ...data
+          removed_part_name: data.name,
+          removed_part_photo: data.photo,
+          installed_serial: data.serial
         });
       if (error) throw error;
     }

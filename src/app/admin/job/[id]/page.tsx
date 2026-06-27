@@ -15,7 +15,6 @@ export default function AdminJobManagement() {
   const [statusMsg, setStatusMsg] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  // Feature States
   const [diagnosis, setDiagnosis] = useState('');
   const [price, setPrice] = useState('');
   const [parts, setParts] = useState('');
@@ -52,18 +51,26 @@ export default function AdminJobManagement() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check if file is too large (Optional: Cap at 5MB just to prevent server timeout, but no forced compression)
+    if (file.size > 5 * 1024 * 1024) {
+      return alert("File is too large. Please keep it under 5MB for a stable upload.");
+    }
+
     setIsUploading(true);
-    setStatusMsg('Compressing & Uploading Evidence...');
+    setStatusMsg('Uploading Original Quality Image...');
 
     try {
-      // 1. Upload to Supabase Storage
+      // Upload Original File Directly (No Compression)
       const fileExt = file.name.split('.').pop();
-      const fileName = `${id}-${photoStage}-${Math.random()}.${fileExt}`;
+      const fileName = `${id}-${photoStage}-${Date.now()}.${fileExt}`;
       const filePath = `repairs/${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('repair-evidence')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: true
+        });
 
       if (uploadError) throw uploadError;
 
@@ -85,30 +92,30 @@ export default function AdminJobManagement() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 transition-colors text-white">
-      <div className="max-w-4xl mx-auto space-y-8 text-white">
-        <div className="flex flex-col gap-4 text-white">
-          <Link href="/admin" className="text-blue-500 flex items-center gap-2 hover:underline">
-            <ArrowLeft size={16} /> Back to Dashboard
+    <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 transition-colors">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex flex-col gap-4">
+          <Link href="/admin" className="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+            <ArrowLeft size={16} /> <span className="text-xs font-bold uppercase tracking-widest">Back to Ops</span>
           </Link>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 text-white">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
-              <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-1">Repair Mission</p>
+              <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-1 text-white">Repair Mission</p>
               <h1 className="text-3xl font-black uppercase tracking-tighter text-white">{booking?.customer_name}</h1>
             </div>
-            <div className="flex flex-wrap gap-3 text-white">
-              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2">
+            <div className="flex flex-wrap gap-3">
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
                 <Hash size={12} className="text-slate-500"/>
-                <span className="text-xs font-mono font-bold text-blue-400">{id.slice(0, 8)}</span>
+                <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-tighter">{id.slice(0, 8)}</span>
               </div>
-              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 text-white">
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
                 <Phone size={12} className="text-slate-500"/>
-                <span className="text-xs font-bold text-white">{booking?.customer_phone}</span>
+                <span className="text-[10px] font-bold text-white">{booking?.customer_phone}</span>
               </div>
-              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 text-white">
+              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
                 <Calendar size={12} className="text-slate-500"/>
-                <span className="text-xs font-bold text-white">{new Date(booking?.created_at).toLocaleDateString()}</span>
+                <span className="text-[10px] font-bold text-white">{new Date(booking?.created_at).toLocaleDateString('en-IN')}</span>
               </div>
             </div>
           </div>
@@ -137,7 +144,7 @@ export default function AdminJobManagement() {
           <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl text-white">
             <h2 className="font-bold flex items-center gap-2 text-slate-400 uppercase text-xs tracking-widest text-white">
               <Camera size={18} className="text-blue-500" />
-              Visual Evidence
+              Visual Evidence (Original Quality)
             </h2>
             <div className="space-y-4 text-white">
               <div className="grid grid-cols-3 gap-2 text-white">
@@ -153,10 +160,10 @@ export default function AdminJobManagement() {
               </div>
 
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-800 border-dashed rounded-2xl cursor-pointer hover:bg-slate-800/50 hover:border-blue-500/50 transition-all text-white">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-white">
-                  <UploadCloud className="w-8 h-8 mb-2 text-slate-500" />
+                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-white text-center">
+                  <UploadCloud className="w-8 h-8 mb-2 text-slate-500 mx-auto" />
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    {isUploading ? 'Uploading...' : `Click to Upload for ${photoStage}`}
+                    {isUploading ? 'Uploading High-Res...' : `Upload Original for ${photoStage}`}
                   </p>
                 </div>
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
@@ -167,7 +174,7 @@ export default function AdminJobManagement() {
           <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4 md:col-span-2 shadow-2xl text-white">
             <h2 className="font-bold flex items-center gap-2 text-slate-400 uppercase text-xs tracking-widest text-white">
               <AlertCircle size={18} className="text-amber-500" />
-              Transparency Gate (Create Approval)
+              Create Approval Request (Transparency Gate)
             </h2>
             <div className="grid md:grid-cols-3 gap-6 text-white">
               <textarea
@@ -177,24 +184,30 @@ export default function AdminJobManagement() {
                 onChange={e => setDiagnosis(e.target.value)}
               />
               <div className="space-y-4 text-white">
-                <input
-                  type="number"
-                  placeholder="Price (₹)"
-                  className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-lg font-bold text-amber-500 outline-none text-white"
-                  value={price}
-                  onChange={e => setPrice(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Parts Details"
-                  className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
-                  value={parts}
-                  onChange={e => setParts(e.target.value)}
-                />
+                <div className="space-y-2 text-white">
+                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Quoted Price (INR)</label>
+                  <input
+                    type="number"
+                    placeholder="Total repair cost"
+                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-lg font-bold text-amber-500 outline-none"
+                    value={price}
+                    onChange={e => setPrice(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2 text-white">
+                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Parts Detail</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 52Wh Battery"
+                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
+                    value={parts}
+                    onChange={e => setParts(e.target.value)}
+                  />
+                </div>
                 <button
                   onClick={() => runSecureAction('CREATE_APPROVAL', { diagnosis, price: parseFloat(price), parts })}
                   disabled={!diagnosis || !price}
-                  className="w-full bg-amber-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 transition-all shadow-lg shadow-amber-600/20 disabled:opacity-30 text-white"
+                  className="w-full bg-amber-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 transition-all shadow-lg shadow-amber-600/20 disabled:opacity-30"
                 >
                   Send to Customer
                 </button>

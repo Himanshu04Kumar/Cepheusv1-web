@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Camera, AlertCircle, RefreshCw, Phone, Hash, Calendar, UploadCloud, Plus, Trash2, ShieldCheck, Wrench } from 'lucide-react';
+import { ArrowLeft, Loader2, Camera, AlertCircle, RefreshCw, Phone, Hash, Calendar, UploadCloud, Plus, Trash2, ShieldCheck, Wrench, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
@@ -17,6 +17,7 @@ export default function AdvancedAdminManagement() {
 
   // Event 4: Options State
   const [options, setOptions] = useState([{ option_name: 'OEM Original', description: '', price: '' }]);
+  const [selectedOption, setSelectedOption] = useState(null);
 
   // Event 5: Part Documentation State
   const [partDoc, setPartDoc] = useState({ name: '', removed_photo: '', installed_photo: '', manufacturer: '', serial: '', condition: '' });
@@ -29,6 +30,10 @@ export default function AdvancedAdminManagement() {
       const { data: optData } = await supabase.from('repair_options').select('*').eq('booking_id', id);
       if (optData && optData.length > 0) {
         setOptions(optData.map(o => ({ option_name: o.option_name, description: o.description, price: o.price })));
+
+        // Find if any option was already paid for
+        const selected = optData.find(o => o.is_selected === true);
+        if (selected) setSelectedOption(selected);
       }
 
       setLoading(false);
@@ -62,11 +67,8 @@ export default function AdvancedAdminManagement() {
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from('repair-evidence').getPublicUrl(path);
       callback(publicUrl);
-    } catch (e) {
-      alert(`Upload Failed: ${e.message}`);
-    } finally {
-      setIsUploading(false);
-    }
+    } catch (e) { alert(`Upload Failed: ${e.message}`); }
+    finally { setIsUploading(false); }
   };
 
   const addOption = () => {
@@ -80,6 +82,8 @@ export default function AdvancedAdminManagement() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
+
+  const isLocked = ['IN_REPAIR', 'QUALITY_CHECK', 'DELIVERED'].includes(booking?.status);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 transition-colors">
@@ -96,7 +100,6 @@ export default function AdvancedAdminManagement() {
           </div>
         </div>
 
-        {/* NEW CONTEXT BAR: Missing details restored here */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
            <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl">
              <p className="text-[10px] text-slate-500 uppercase font-black mb-1 tracking-widest">Hardware</p>
@@ -117,7 +120,7 @@ export default function AdvancedAdminManagement() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* COLUMN 1: STAGE CONTROL */}
+
           <div className="space-y-6">
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
               <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><RefreshCw size={14}/> Logistics Stage</h2>
@@ -138,24 +141,39 @@ export default function AdvancedAdminManagement() {
             </div>
           </div>
 
-          {/* COLUMN 2: OPTIONS GATE */}
+          {/* COLUMN 2: OPTIONS GATE (LOCKED AFTER PAYMENT) */}
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-sm font-black uppercase tracking-widest text-amber-500 flex items-center gap-2"><AlertCircle size={16}/> Transparency Gate (Repair Options)</h2>
-                <button onClick={addOption} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all"><Plus size={16}/></button>
+                {!isLocked && <button onClick={addOption} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all"><Plus size={16}/></button>}
               </div>
-              <div className="space-y-4">
-                {options.map((opt, i) => (
-                  <div key={i} className="grid grid-cols-12 gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 relative group">
-                    <div className="col-span-4"><input placeholder="Name (e.g. OEM)" className="w-full bg-transparent text-xs font-bold uppercase outline-none text-white" value={opt.option_name} onChange={e => updateOption(i, 'option_name', e.target.value)}/></div>
-                    <div className="col-span-5"><input placeholder="Details..." className="w-full bg-transparent text-[10px] outline-none text-slate-300" value={opt.description} onChange={e => updateOption(i, 'description', e.target.value)}/></div>
-                    <div className="col-span-2"><input placeholder="Price" className="w-full bg-transparent text-xs font-black text-amber-500 outline-none" type="number" value={opt.price} onChange={e => updateOption(i, 'price', e.target.value)}/></div>
-                    <div className="col-span-1 flex justify-end"><button onClick={() => setOptions(options.filter((_, idx) => idx !== i))} className="text-slate-700 hover:text-red-500"><Trash2 size={14}/></button></div>
+
+              {selectedOption ? (
+                <div className="bg-green-600/10 border border-green-500/30 p-6 rounded-3xl flex justify-between items-center animate-in zoom-in duration-500">
+                  <div>
+                    <p className="text-[10px] font-black text-green-500 uppercase tracking-widest mb-1">Customer Selection Verified</p>
+                    <p className="text-lg font-black text-white uppercase">{selectedOption.option_name}</p>
+                    <p className="text-xs text-slate-400">{selectedOption.description}</p>
                   </div>
-                ))}
-              </div>
-              <button onClick={() => runAction('PUBLISH_OPTIONS', { options })} className="w-full bg-amber-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-500 transition-all shadow-lg">Publish Options to Customer</button>
+                  <div className="text-right">
+                     <p className="text-2xl font-black text-green-400 font-mono tracking-tighter">₹{selectedOption.price}</p>
+                     <div className="flex items-center gap-1 text-[10px] font-black text-green-500 uppercase mt-1"><CheckCircle2 size={12}/> Payment Secure</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {options.map((opt, i) => (
+                    <div key={i} className="grid grid-cols-12 gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 relative group">
+                      <div className="col-span-4"><input placeholder="Name (e.g. OEM)" className="w-full bg-transparent text-xs font-bold uppercase outline-none text-white" value={opt.option_name} onChange={e => updateOption(i, 'option_name', e.target.value)}/></div>
+                      <div className="col-span-5"><input placeholder="Details..." className="w-full bg-transparent text-[10px] outline-none text-slate-300" value={opt.description} onChange={e => updateOption(i, 'description', e.target.value)}/></div>
+                      <div className="col-span-2"><input placeholder="Price" className="w-full bg-transparent text-xs font-black text-amber-500 outline-none" type="number" value={opt.price} onChange={e => updateOption(i, 'price', e.target.value)}/></div>
+                      <div className="col-span-1 flex justify-end"><button onClick={() => setOptions(options.filter((_, idx) => idx !== i))} className="text-slate-700 hover:text-red-500"><Trash2 size={14}/></button></div>
+                    </div>
+                  ))}
+                  <button onClick={() => runAction('PUBLISH_OPTIONS', { options })} className="w-full bg-amber-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-500 transition-all shadow-lg">Publish Options to Customer</button>
+                </div>
+              )}
             </div>
 
             {/* COLUMN 3: VISUAL PROOF */}

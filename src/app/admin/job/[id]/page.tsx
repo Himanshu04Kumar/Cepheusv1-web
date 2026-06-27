@@ -3,11 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Camera, AlertCircle, RefreshCw, Phone, Hash, Calendar, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Loader2, Camera, AlertCircle, RefreshCw, Phone, Hash, Calendar, UploadCloud, Plus, Trash2, ShieldCheck, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-export default function AdminJobManagement() {
+export default function AdvancedAdminManagement() {
   const params = useParams();
   const id = params.id as string;
   const [booking, setBooking] = useState(null);
@@ -15,10 +15,12 @@ export default function AdminJobManagement() {
   const [statusMsg, setStatusMsg] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  const [diagnosis, setDiagnosis] = useState('');
-  const [price, setPrice] = useState('');
-  const [parts, setParts] = useState('');
-  const [photoStage, setPhotoUrlStage] = useState('RECEIVING');
+  // Event 4: Options State
+  const [options, setOptions] = useState([{ option_name: 'OEM Original', description: '', price: '' }]);
+
+  // Event 5: Part Documentation State
+  const [docType, setDocType] = useState('REPLACEMENT'); // REPLACEMENT or REPAIR
+  const [partDoc, setPartDoc] = useState({ name: '', removed_photo: '', installed_photo: '', manufacturer: '', serial: '', condition: '' });
 
   useEffect(() => {
     async function fetchJob() {
@@ -29,195 +31,136 @@ export default function AdminJobManagement() {
     if (id) fetchJob();
   }, [id]);
 
-  const runSecureAction = async (action, data) => {
-    setStatusMsg(`Action: ${action} - Processing...`);
+  const runAction = async (action, data) => {
+    setStatusMsg(`Syncing: ${action}...`);
     try {
       const res = await fetch('/api/admin/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, bookingId: id, data }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Backend failed');
-
-      setStatusMsg('SUCCESS! Refreshing...');
-      setTimeout(() => window.location.reload(), 1000);
+      if (!res.ok) throw new Error('API Rejection');
+      setStatusMsg('Success! Registry Updated.');
+      setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
-      setStatusMsg('API ERROR: ' + err.message);
+      setStatusMsg('API Error: Deployment Failed');
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check if file is too large (Optional: Cap at 5MB just to prevent server timeout, but no forced compression)
-    if (file.size > 5 * 1024 * 1024) {
-      return alert("File is too large. Please keep it under 5MB for a stable upload.");
-    }
-
+  const handleUpload = async (file, callback) => {
     setIsUploading(true);
-    setStatusMsg('Uploading Original Quality Image...');
-
     try {
-      // Upload Original File Directly (No Compression)
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${id}-${photoStage}-${Date.now()}.${fileExt}`;
-      const filePath = `repairs/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('repair-evidence')
-        .upload(filePath, file, {
-          contentType: file.type,
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
-
-      // 2. Get Public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('repair-evidence')
-        .getPublicUrl(filePath);
-
-      // 3. Save to database via Secure API
-      await runSecureAction('UPLOAD_PHOTO', { url: publicUrl, stage: photoStage });
-
-    } catch (err) {
-      alert(`Upload failed: ${err.message}`);
-    } finally {
-      setIsUploading(false);
-    }
+      const path = `repairs/${id}-${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from('repair-evidence').upload(path, file);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('repair-evidence').getPublicUrl(path);
+      callback(publicUrl);
+    } catch (e) { alert('Upload Failed'); }
+    finally { setIsUploading(false); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 transition-colors">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex flex-col gap-4">
-          <Link href="/admin" className="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
-            <ArrowLeft size={16} /> <span className="text-xs font-bold uppercase tracking-widest">Back to Ops</span>
-          </Link>
+      <div className="max-w-5xl mx-auto space-y-8">
+        <Link href="/admin" className="text-slate-500 hover:text-white flex items-center gap-2"><ArrowLeft size={16} /> Dashboard</Link>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-            <div>
-              <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-1 text-white">Repair Mission</p>
-              <h1 className="text-3xl font-black uppercase tracking-tighter text-white">{booking?.customer_name}</h1>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
-                <Hash size={12} className="text-slate-500"/>
-                <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-tighter">{id.slice(0, 8)}</span>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
-                <Phone size={12} className="text-slate-500"/>
-                <span className="text-[10px] font-bold text-white">{booking?.customer_phone}</span>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-xl">
-                <Calendar size={12} className="text-slate-500"/>
-                <span className="text-[10px] font-bold text-white">{new Date(booking?.created_at).toLocaleDateString('en-IN')}</span>
-              </div>
-            </div>
+        <div className="flex justify-between items-end border-b border-slate-900 pb-8">
+          <div>
+            <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-1">Command Unit</p>
+            <h1 className="text-4xl font-black uppercase tracking-tighter">{booking?.customer_name}</h1>
+          </div>
+          <div className="flex gap-4">
+             <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800 text-[10px] font-black uppercase text-slate-500">Status: <span className="text-blue-400">{booking?.status}</span></div>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 text-white">
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl text-white">
-            <h2 className="font-bold flex items-center gap-2 text-slate-400 uppercase text-xs tracking-widest text-white">
-              <RefreshCw size={18} className="text-blue-500" />
-              Update Status
-            </h2>
-            <p className="text-sm text-slate-500">Current: <span className="font-bold text-blue-400">{booking?.status}</span></p>
-            <div className="grid grid-cols-2 gap-2 text-white">
-              {['PICKED_UP', 'DIAGNOSING', 'QUALITY_CHECK', 'DELIVERED'].map(s => (
-                <button
-                  key={s}
-                  onClick={() => runSecureAction('UPDATE_STATUS', { status: s })}
-                  className="p-3 text-[10px] font-bold border border-slate-800 rounded-xl hover:bg-blue-600 transition-colors uppercase text-white"
-                >
-                  {s.replace('_', ' ')}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="grid lg:grid-cols-3 gap-8">
 
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl text-white">
-            <h2 className="font-bold flex items-center gap-2 text-slate-400 uppercase text-xs tracking-widest text-white">
-              <Camera size={18} className="text-blue-500" />
-              Visual Evidence (Original Quality)
-            </h2>
-            <div className="space-y-4 text-white">
-              <div className="grid grid-cols-3 gap-2 text-white">
-                {['RECEIVING', 'REPAIR', 'COMPLETED'].map(stage => (
-                  <button
-                    key={stage}
-                    onClick={() => setPhotoUrlStage(stage)}
-                    className={`py-2 text-[8px] font-black rounded-lg border transition-all ${photoStage === stage ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-800 text-slate-500'}`}
-                  >
-                    {stage}
-                  </button>
+          {/* COLUMN 1: STAGE CONTROL */}
+          <div className="space-y-6">
+            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+              <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><RefreshCw size={14}/> Logistics Stage</h2>
+              <div className="grid grid-cols-1 gap-2">
+                {['PICKED_UP', 'DIAGNOSING', 'QUALITY_CHECK', 'DELIVERED'].map(s => (
+                  <button key={s} onClick={() => runAction('UPDATE_STATUS', { status: s })} className={`p-3 text-[10px] font-black rounded-xl border transition-all uppercase tracking-widest ${booking?.status === s ? 'bg-blue-600 border-blue-500' : 'border-slate-800 hover:bg-slate-800'}`}>{s.replace('_', ' ')}</button>
                 ))}
               </div>
+            </div>
 
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-800 border-dashed rounded-2xl cursor-pointer hover:bg-slate-800/50 hover:border-blue-500/50 transition-all text-white">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6 text-white text-center">
-                  <UploadCloud className="w-8 h-8 mb-2 text-slate-500 mx-auto" />
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    {isUploading ? 'Uploading High-Res...' : `Upload Original for ${photoStage}`}
-                  </p>
-                </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
-              </label>
+            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+              <h2 className="text-xs font-black uppercase tracking-widest text-green-500 flex items-center gap-2"><ShieldCheck size={14}/> Finalize & Warranty</h2>
+              <p className="text-[10px] text-slate-500">Issue warranty only after delivery is confirmed.</p>
+              <div className="flex gap-2">
+                <button onClick={() => runAction('ISSUE_WARRANTY', { days: 90 })} className="flex-1 bg-green-600/10 border border-green-500/20 text-green-500 py-3 rounded-xl text-[10px] font-black uppercase hover:bg-green-600 hover:text-white transition-all">90 Day Protection</button>
+                <button onClick={() => runAction('ISSUE_WARRANTY', { days: 365 })} className="flex-1 bg-green-600/10 border border-green-500/20 text-green-500 py-3 rounded-xl text-[10px] font-black uppercase hover:bg-green-600 hover:text-white transition-all">1 Year Protection</button>
+              </div>
             </div>
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4 md:col-span-2 shadow-2xl text-white">
-            <h2 className="font-bold flex items-center gap-2 text-slate-400 uppercase text-xs tracking-widest text-white">
-              <AlertCircle size={18} className="text-amber-500" />
-              Create Approval Request (Transparency Gate)
-            </h2>
-            <div className="grid md:grid-cols-3 gap-6 text-white">
-              <textarea
-                placeholder="Diagnosis"
-                className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-sm col-span-2 h-32 outline-none focus:ring-1 ring-amber-500 text-white"
-                value={diagnosis}
-                onChange={e => setDiagnosis(e.target.value)}
-              />
-              <div className="space-y-4 text-white">
-                <div className="space-y-2 text-white">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Quoted Price (INR)</label>
-                  <input
-                    type="number"
-                    placeholder="Total repair cost"
-                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-lg font-bold text-amber-500 outline-none"
-                    value={price}
-                    onChange={e => setPrice(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2 text-white">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Parts Detail</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 52Wh Battery"
-                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white"
-                    value={parts}
-                    onChange={e => setParts(e.target.value)}
-                  />
-                </div>
-                <button
-                  onClick={() => runSecureAction('CREATE_APPROVAL', { diagnosis, price: parseFloat(price), parts })}
-                  disabled={!diagnosis || !price}
-                  className="w-full bg-amber-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 transition-all shadow-lg shadow-amber-600/20 disabled:opacity-30"
-                >
-                  Send to Customer
-                </button>
+          {/* COLUMN 2: OPTIONS GATE (EVENT 4) */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-sm font-black uppercase tracking-widest text-amber-500 flex items-center gap-2"><AlertCircle size={16}/> Transparency Gate (Repair Options)</h2>
+                <button onClick={() => setOptions([...options, { option_name: '', description: '', price: '' }])} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all"><Plus size={16}/></button>
               </div>
+
+              <div className="space-y-4">
+                {options.map((opt, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 relative group">
+                    <div className="col-span-4"><input placeholder="Name (e.g. OEM)" className="w-full bg-transparent text-xs font-bold uppercase outline-none" value={opt.option_name} onChange={e => {const n = [...options]; n[i].option_name = e.target.value; setOptions(n);}}/></div>
+                    <div className="col-span-5"><input placeholder="Details..." className="w-full bg-transparent text-[10px] outline-none" value={opt.description} onChange={e => {const n = [...options]; n[i].description = e.target.value; setOptions(n);}}/></div>
+                    <div className="col-span-2"><input placeholder="Price" className="w-full bg-transparent text-xs font-black text-amber-500 outline-none" type="number" value={opt.price} onChange={e => {const n = [...options]; n[i].price = e.target.value; setOptions(n);}}/></div>
+                    <div className="col-span-1 flex justify-end"><button onClick={() => setOptions(options.filter((_, idx) => idx !== i))} className="text-slate-700 hover:text-red-500"><Trash2 size={14}/></button></div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => runAction('PUBLISH_OPTIONS', { options })} className="w-full bg-amber-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-500 transition-all shadow-lg">Publish Options to Customer</button>
+            </div>
+
+            {/* COLUMN 3: VISUAL PROOF (EVENT 5) */}
+            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6">
+              <h2 className="text-sm font-black uppercase tracking-widest text-purple-500 flex items-center gap-2"><Camera size={16}/> Evidence Documentation</h2>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Removed Part Photo */}
+                <div className="space-y-3">
+                   <p className="text-[10px] font-black text-slate-500 uppercase ml-2">Condition / Before</p>
+                   <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-800/50 transition-all overflow-hidden relative">
+                      {partDoc.removed_photo ? <img src={partDoc.removed_photo} className="w-full h-full object-cover"/> : <UploadCloud size={24} className="text-slate-700"/>}
+                      <input type="file" className="hidden" onChange={e => handleUpload(e.target.files[0], (url) => setPartDoc({...partDoc, removed_photo: url}))}/>
+                   </label>
+                </div>
+                {/* Installed Part Photo */}
+                <div className="space-y-3">
+                   <p className="text-[10px] font-black text-slate-500 uppercase ml-2">Installed / After</p>
+                   <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-slate-800 rounded-2xl cursor-pointer hover:bg-slate-800/50 transition-all overflow-hidden relative">
+                      {partDoc.installed_photo ? <img src={partDoc.installed_photo} className="w-full h-full object-cover"/> : <UploadCloud size={24} className="text-slate-700"/>}
+                      <input type="file" className="hidden" onChange={e => handleUpload(e.target.files[0], (url) => setPartDoc({...partDoc, installed_photo: url}))}/>
+                   </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <input placeholder="Part Name (e.g. Battery)" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
+                 <input placeholder="Serial Number" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
+              </div>
+
+              <button onClick={() => runAction('DOCUMENT_PART', {
+                removed_part_name: partDoc.name,
+                removed_part_photo: partDoc.removed_photo,
+                installed_part_name: partDoc.name,
+                installed_part_photo_before: partDoc.installed_photo,
+                installed_serial: partDoc.serial
+              })} className="w-full bg-purple-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-purple-500 transition-all shadow-lg">Submit Visual Evidence</button>
             </div>
           </div>
         </div>
 
         {statusMsg && (
-          <div className="p-4 bg-blue-600 text-white rounded-xl font-bold text-center animate-pulse uppercase text-[10px] tracking-widest text-white">
+          <div className="fixed bottom-8 right-8 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-2xl animate-in slide-in-from-right-8">
             {statusMsg}
           </div>
         )}

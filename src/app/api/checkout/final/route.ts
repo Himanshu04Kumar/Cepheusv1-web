@@ -5,7 +5,6 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-// This API now handles both creating the order AND confirming the update
 export async function POST(req: Request) {
   try {
     const { action, bookingId, amount, approvalId } = await req.json();
@@ -25,11 +24,10 @@ export async function POST(req: Request) {
     }
 
     if (action === 'CONFIRM_PAYMENT') {
-      // SECURE BACKEND UPDATE: Bypasses RLS and ensures status moves forward
-      // 1. Mark approval as APPROVED
+      // 1. Mark the SPECIFIC option as selected
       await (supabaseAdmin as any)
-        .from('approval_requests')
-        .update({ status: 'APPROVED', responded_at: new Date().toISOString() })
+        .from('repair_options')
+        .update({ is_selected: true })
         .eq('id', approvalId);
 
       // 2. Move booking to IN_REPAIR

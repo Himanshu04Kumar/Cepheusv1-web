@@ -16,31 +16,43 @@ export async function POST(req: Request) {
       if (error) throw error;
     }
 
-    if (action === 'CREATE_APPROVAL') {
-      const { error: reqError } = await (supabaseAdmin as any)
-        .from('approval_requests')
-        .insert({
-          booking_id: bookingId,
-          diagnosis_text: data.diagnosis,
-          quoted_price: data.price,
-          parts_detail: data.parts,
-          status: 'PENDING'
-        });
-      if (reqError) throw reqError;
+    if (action === 'PUBLISH_OPTIONS') {
+      // 1. Clear existing options
+      await (supabaseAdmin as any).from('repair_options').delete().eq('booking_id', bookingId);
 
-      await (supabaseAdmin as any)
-        .from('bookings')
-        .update({ status: 'AWAITING_APPROVAL' })
-        .eq('id', bookingId);
+      // 2. Insert new options
+      const { error } = await (supabaseAdmin as any)
+        .from('repair_options')
+        .insert(data.options.map(opt => ({ ...opt, booking_id: bookingId })));
+
+      if (error) throw error;
+
+      // 3. Move status
+      await (supabaseAdmin as any).from('bookings').update({ status: 'AWAITING_APPROVAL' }).eq('id', bookingId);
     }
 
-    if (action === 'UPLOAD_PHOTO') {
+    if (action === 'DOCUMENT_PART') {
       const { error } = await (supabaseAdmin as any)
-        .from('repair_photos')
+        .from('part_documentation')
         .insert({
           booking_id: bookingId,
-          stage: data.stage,
-          photo_url: data.url
+          ...data
+        });
+      if (error) throw error;
+    }
+
+    if (action === 'ISSUE_WARRANTY') {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + parseInt(data.days));
+
+      const { error } = await (supabaseAdmin as any)
+        .from('warranty_details')
+        .upsert({
+          booking_id: bookingId,
+          warranty_id: `W-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          period_days: parseInt(data.days),
+          expiry_date: expiryDate.toISOString().split('T')[0],
+          status: 'ACTIVE'
         });
       if (error) throw error;
     }

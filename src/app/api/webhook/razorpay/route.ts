@@ -12,7 +12,6 @@ export async function POST(req: Request) {
     const signature = req.headers.get('x-razorpay-signature');
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET!;
 
-    // Verify signature
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(body)
@@ -27,12 +26,17 @@ export async function POST(req: Request) {
     if (event.event === 'order.paid') {
       const order = event.payload.order.entity;
       const bookingId = order.receipt;
+      const amount = order.amount; // In paise
 
-      // Update booking status
+      // Logic: If amount is 9900 (₹99), it's a booking fee -> status = BOOKED
+      // If amount is higher, it's a repair payment -> status = IN_REPAIR
+      const isBookingFee = amount === 9900;
+      const newStatus = isBookingFee ? 'BOOKED' : 'IN_REPAIR';
+
       const { data: booking, error } = await (supabaseAdmin as any)
         .from('bookings')
         .update({
-          status: 'BOOKED',
+          status: newStatus,
           booking_fee_paid: true
         })
         .eq('id', bookingId)
@@ -41,8 +45,10 @@ export async function POST(req: Request) {
 
       if (error) throw error;
 
-      // Log to Google Sheets
-      await logToSheets(booking);
+      // Only log to sheets for the initial booking fee to avoid duplicates
+      if (isBookingFee) {
+        await logToSheets(booking);
+      }
     }
 
     return NextResponse.json({ status: 'ok' });

@@ -16,16 +16,11 @@ export async function POST(req: Request) {
         updateData.pickup_slot = data.deliveryWindow;
       }
 
-      // Special handling for 'DELIVERED' to ensure clean transition
-      if (data.status === 'DELIVERED') {
-         updateData.status = 'DELIVERED';
-      }
-
       const { error } = await (supabaseAdmin as any)
         .from('bookings')
         .update(updateData)
         .eq('id', bookingId);
-
+        
       if (error) throw error;
       return NextResponse.json({ success: true });
     }
@@ -55,6 +50,19 @@ export async function POST(req: Request) {
           removed_part_name: data.name,
           removed_part_photo: data.photo,
           installed_serial: data.serial
+        });
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
+    // NEW: Action to handle stage-specific technician comments
+    if (action === 'ADD_COMMENT') {
+      const { error } = await (supabaseAdmin as any)
+        .from('repair_comments')
+        .insert({
+          booking_id: bookingId,
+          stage: data.stage,
+          comment_text: data.text
         });
       if (error) throw error;
       return NextResponse.json({ success: true });

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck, MessageSquare } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck, MessageSquare, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
@@ -82,14 +82,15 @@ export default function AdvancedTrackingPage() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
-  if (!booking) return <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-8"><AlertCircle size={48}/><h1 className="mt-4">Not Found</h1><Link href="/">Home</Link></div>;
+  if (!booking) return <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-8"><h1>Booking Not Found</h1><Link href="/" className="mt-8 bg-white text-black px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest">Return Home</Link></div>;
 
-  const getCommentsForStage = (stage) => comments.filter(c => c.stage === stage);
+  const getNotes = (stage) => comments.filter(c => c.stage === stage);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 transition-colors">
       <div className="max-w-3xl mx-auto space-y-12">
         <Link href="/" className="text-slate-400 hover:text-white flex items-center gap-2"><ArrowLeft size={16}/> Home</Link>
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-900 pb-8 text-white">
           <h1 className="text-4xl font-black uppercase tracking-tighter text-blue-500">Repair Status</h1>
           <div className="flex flex-wrap gap-3">
@@ -100,7 +101,7 @@ export default function AdvancedTrackingPage() {
         </div>
 
         <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group text-white">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-600/10 transition-colors" />
+           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full -mr-16 -mt-16 transition-colors" />
            <div className="bg-blue-600 px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest inline-block mb-8">{booking.status.replace(/_/g, ' ')}</div>
            <div className="grid md:grid-cols-2 gap-8 text-white">
               <div><p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1 text-white">Hardware</p><p className="text-xl font-bold text-slate-200 uppercase">{booking.device_brand} {booking.device_model}</p></div>
@@ -109,21 +110,23 @@ export default function AdvancedTrackingPage() {
         </div>
 
         <div className="space-y-12 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-900 text-white">
+
           <EventCard icon={<CheckCircle2 className="text-green-500" />} title="Booking Confirmed" date={formatDate(booking.created_at)}>
-            <p className="text-xs text-slate-400">Order logged and fee verified.</p>
+            {getNotes('BOOKED').map(n => <CommentBox key={n.id} text={n.comment_text} />)}
+            <p className="text-xs text-slate-400">Order successfully logged into Cepheus Registry.</p>
           </EventCard>
 
           {['PICKED_UP', 'DIAGNOSING', 'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(booking.status) && (
             <EventCard icon={<Package className="text-blue-500" />} title="Device Picked Up" date="Verified">
-               {getCommentsForStage('PICKED_UP').map(c => <div key={c.id} className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl mb-3 flex gap-3 items-start"><MessageSquare size={14} className="text-blue-400 mt-1 shrink-0"/><p className="text-xs text-blue-200 font-medium leading-relaxed italic">"{c.comment_text}"</p></div>)}
-               <p className="text-xs text-slate-400">Hardware retrieved and en route to facility.</p>
+               {getNotes('PICKED_UP').map(n => <CommentBox key={n.id} text={n.comment_text} />)}
+               <p className="text-xs text-slate-400">Hardware retrieved and en route to our facility.</p>
             </EventCard>
           )}
 
           {['DIAGNOSING', 'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(booking.status) && (
             <EventCard icon={<Wrench className="text-blue-500" />} title="Diagnosis Complete" date="Verified">
-               {getCommentsForStage('DIAGNOSING').map(c => <div key={c.id} className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl mb-3 flex gap-3 items-start"><MessageSquare size={14} className="text-blue-400 mt-1 shrink-0"/><p className="text-xs text-blue-200 font-medium leading-relaxed italic">"{c.comment_text}"</p></div>)}
-               <p className="text-xs text-slate-400">Assessment complete. Options available below.</p>
+               {getNotes('DIAGNOSING').map(n => <CommentBox key={n.id} text={n.comment_text} />)}
+               <p className="text-xs text-slate-400">Technician assessment complete. Options available below.</p>
             </EventCard>
           )}
 
@@ -144,15 +147,21 @@ export default function AdvancedTrackingPage() {
 
           {booking.status === 'OUT_FOR_DELIVERY' && (
             <EventCard icon={<Truck className="text-orange-500 animate-bounce" />} title="Out For Delivery" date="Live Logistics">
+               {getNotes('OUT_FOR_DELIVERY').map(n => <CommentBox key={n.id} text={n.comment_text} />)}
                <div className="bg-orange-500/5 border border-orange-500/20 p-6 rounded-3xl space-y-3 shadow-xl text-white">
                  <p className="text-xs text-orange-400 font-bold uppercase flex items-center gap-2">Estimated Window: <span>{booking.pickup_slot}</span></p>
+                 <p className="text-[11px] text-slate-400">Our partner is on the way. Please keep your registered phone reachable.</p>
                </div>
             </EventCard>
           )}
 
           {booking.status === 'DELIVERED' && (
-            <EventCard icon={<CheckCircle2 className="text-green-500" />} title="Delivered" date="Success">
-               <p className="text-xs text-green-400 font-bold uppercase">Handover Confirmed</p>
+            <EventCard icon={<CheckCircle className="text-green-500" />} title="Hardware Delivered" date="Success">
+               {getNotes('DELIVERED').map(n => <CommentBox key={n.id} text={n.comment_text} />)}
+               <div className="bg-green-500/5 border border-green-500/20 p-6 rounded-3xl space-y-3 shadow-xl text-white">
+                 <p className="text-xs text-green-400 font-bold uppercase">Repair Mission Complete</p>
+                 <p className="text-[11px] text-slate-400">Handover confirmed and verified at destination.</p>
+               </div>
             </EventCard>
           )}
 
@@ -171,8 +180,8 @@ export default function AdvancedTrackingPage() {
           {warranty && (
             <EventCard icon={<ShieldCheck className="text-green-500" />} title="Warranty Certificate" date={formatDate(warranty.expiry_date)}>
               <div className="bg-green-500/5 border border-green-500/20 p-8 rounded-[2rem] space-y-4 text-white">
-                <p className="text-[10px] font-black text-green-500/50 uppercase tracking-widest">W-CERT: {warranty.warranty_id}</p>
-                <div className="grid grid-cols-2 gap-8 pt-4 border-t border-green-500/10 text-white"><div><p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Coverage</p><p className="text-sm font-bold text-white">{warranty.period_days} Days</p></div><div><p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Expires</p><p className="text-sm font-bold text-slate-200">{formatDate(warranty.expiry_date)}</p></div></div>
+                <p className="text-[10px] font-black text-green-500/50 uppercase">Certificate: {warranty.warranty_id}</p>
+                <div className="grid grid-cols-2 gap-8 pt-4 border-t border-green-500/10 text-white"><div><p className="text-[10px] text-slate-500 uppercase font-black">Coverage</p><p className="text-sm font-bold text-white">{warranty.period_days} Days</p></div><div><p className="text-[10px] text-slate-500 uppercase font-black">Expires</p><p className="text-sm font-bold text-slate-200">{formatDate(warranty.expiry_date)}</p></div></div>
               </div>
             </EventCard>
           )}
@@ -182,9 +191,18 @@ export default function AdvancedTrackingPage() {
   );
 }
 
+function CommentBox({ text }) {
+  return (
+    <div className="bg-blue-600/10 border border-blue-500/20 p-4 rounded-2xl mb-4 flex gap-3 animate-in slide-in-from-left-2 duration-500">
+      <MessageSquare size={14} className="text-blue-400 mt-1 shrink-0"/>
+      <p className="text-xs text-blue-100 italic font-medium leading-relaxed">"{text}"</p>
+    </div>
+  );
+}
+
 function EventCard({ icon, title, date, children }) {
   return (
-    <div className="relative pl-12 animate-in fade-in slide-in-from-left-4 duration-1000">
+    <div className="relative pl-12 animate-in fade-in slide-in-from-left-4 duration-1000 text-white">
       <div className="absolute left-0 top-0 z-10 bg-slate-950 p-2 rounded-full border border-slate-900 text-blue-500">{icon}</div>
       <div className="space-y-3 text-white"><div className="flex justify-between items-center px-1"><h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">{title}</h3><span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter font-mono">{date}</span></div><div className="bg-slate-900/30 p-6 rounded-3xl border border-slate-800/50 shadow-xl backdrop-blur-sm text-white">{children}</div></div>
     </div>

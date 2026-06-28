@@ -110,6 +110,13 @@ export default function AdvancedAdminManagement() {
           <div className="bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800 text-[10px] font-black uppercase text-slate-500">Status: <span className="text-blue-400">{booking?.status.replace(/_/g, ' ')}</span></div>
         </div>
 
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Hardware</p><p className="text-xs font-bold text-slate-200">{booking?.device_brand} {booking?.device_model}</p></div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Mobile</p><p className="text-xs font-bold text-white">{booking?.customer_phone}</p></div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Logged On</p><p className="text-xs font-bold text-white">{new Date(booking?.created_at).toLocaleDateString('en-IN')}</p></div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Registry ID</p><p className="text-xs font-mono font-bold text-blue-400 uppercase">{id.slice(0,8)}</p></div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
           {/* COLUMN 1: CONTROLS & LOGS */}
@@ -120,6 +127,15 @@ export default function AdvancedAdminManagement() {
                 {['PICKED_UP', 'DIAGNOSING', 'QUALITY_CHECK'].map(s => (
                   <button key={s} onClick={() => runAction('UPDATE_STATUS', { status: s })} className={`p-3 text-[10px] font-black rounded-xl border transition-all uppercase tracking-widest ${booking?.status === s ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-800 hover:bg-slate-800 text-slate-500'}`}>{s.replace(/_/g, ' ')}</button>
                 ))}
+              </div>
+            </div>
+
+            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4 text-white">
+              <h2 className="text-xs font-black uppercase tracking-widest text-orange-500 flex items-center gap-2"><Truck size={14}/> Dispatch</h2>
+              <div className="space-y-3">
+                 <input placeholder="Estimated Delivery (e.g. 6 PM)" className="w-full bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] outline-none text-white" value={deliveryWindow} onChange={e => setDeliveryWindow(e.target.value)} />
+                 <button onClick={() => runAction('UPDATE_STATUS', { status: 'OUT_FOR_DELIVERY', deliveryWindow })} className={`w-full p-3 text-[10px] font-black rounded-xl border transition-all uppercase tracking-widest ${booking?.status === 'OUT_FOR_DELIVERY' ? 'bg-orange-600 border-orange-500' : 'border-slate-800 hover:bg-orange-900/20 text-orange-500'}`}>Out For Delivery</button>
+                 <button onClick={() => runAction('UPDATE_STATUS', { status: 'DELIVERED' })} className={`w-full p-3 text-[10px] font-black rounded-xl border transition-all uppercase tracking-widest ${booking?.status === 'DELIVERED' ? 'bg-green-600 border-green-500' : 'border-slate-800 hover:bg-green-900/20 text-green-500'}`}>Mark Delivered</button>
               </div>
             </div>
 
@@ -139,7 +155,10 @@ export default function AdvancedAdminManagement() {
           {/* COLUMN 2 & 3: MAIN OPERATIONS */}
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6">
-              <h2 className="text-sm font-black uppercase tracking-widest text-amber-500 flex items-center gap-2"><AlertCircle size={16}/> Transparency Gate</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-sm font-black uppercase tracking-widest text-amber-500 flex items-center gap-2"><AlertCircle size={16}/> Transparency Gate</h2>
+                <button onClick={() => setOptions([...options, { option_name: '', description: '', price: '' }])} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all"><Plus size={16}/></button>
+              </div>
               {selectedOption ? (
                 <div className="bg-green-600/10 border border-green-500/30 p-6 rounded-3xl flex justify-between items-center text-white">
                   <div><p className="text-[10px] font-black text-green-500 uppercase tracking-widest mb-1">Customer Selection Verified</p><p className="text-lg font-black uppercase text-white">{selectedOption.option_name}</p></div>
@@ -152,9 +171,10 @@ export default function AdvancedAdminManagement() {
                       <div className="col-span-4"><input readOnly={i===0} className="w-full bg-transparent text-xs font-bold uppercase outline-none text-white" value={opt.option_name} onChange={e => {const n=[...options]; n[i].option_name=e.target.value; setOptions(n);}}/></div>
                       <div className="col-span-5"><input readOnly={i===0} className="w-full bg-transparent text-[10px] outline-none text-slate-400" value={opt.description} onChange={e => {const n=[...options]; n[i].description=e.target.value; setOptions(n);}}/></div>
                       <div className="col-span-2 text-white"><input readOnly={i===0} className="w-full bg-transparent text-xs font-black text-amber-500 outline-none" type="number" value={opt.price} onChange={e => {const n=[...options]; n[i].price=e.target.value; setOptions(n);}}/></div>
+                      <div className="col-span-1 flex justify-end">{i > 0 && <button onClick={() => setOptions(options.filter((_, idx) => idx !== i))} className="text-slate-700 hover:text-red-500"><Trash2 size={14}/></button>}</div>
                     </div>
                   ))}
-                  <button onClick={() => runAction('PUBLISH_OPTIONS', { options })} className="w-full bg-amber-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-500 shadow-lg">Publish Options</button>
+                  <button onClick={() => runAction('PUBLISH_OPTIONS', { options })} className="w-full bg-amber-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-500 shadow-lg">Publish Options</button>
                 </div>
               )}
             </div>

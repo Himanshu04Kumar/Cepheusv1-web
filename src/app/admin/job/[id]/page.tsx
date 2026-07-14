@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase';
 export default function AdvancedAdminManagement() {
   const params = useParams();
   const id = params.id as string;
+  const router = useRouter();
+
   const [booking, setBooking] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,37 +37,63 @@ export default function AdvancedAdminManagement() {
   const [deliveryWindow, setDeliveryWindow] = useState('');
 
   useEffect(() => {
-    async function fetchAllData() {
+    async function checkAuthAndFetch() {
+      // 1. SECURITY GATE: Verify Session
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: prof } = await supabase.from('admin_profiles').select('*').eq('id', session.user.id).single();
+
+      if (!session) {
+        console.error('UNAUTHORIZED ACCESS ATTEMPT');
+        router.push('/login');
+        return;
+      }
+
+      try {
+        // 2. Fetch User Profile/Role
+        const { data: prof, error: profError } = await supabase
+          .from('admin_profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profError || !prof) {
+            // Even with a session, if no profile exists, they shouldn't be here
+            await supabase.auth.signOut();
+            router.push('/login');
+            return;
+        }
         setProfile(prof);
+
+        // 3. Fetch Booking Data
+        const { data: bData } = await supabase.from('bookings').select('*').eq('id', id).single();
+        if (!bData) return setLoading(false);
+        setBooking(bData);
+        setNoteStage(bData.status);
+
+        // 4. Fetch Sub-data
+        const [optData, commData, photoData] = await Promise.all([
+          supabase.from('repair_options').select('*').eq('booking_id', id),
+          supabase.from('repair_comments').select('*').eq('booking_id', id).order('created_at', { ascending: false }),
+          supabase.from('part_documentation').select('*').eq('booking_id', id).order('created_at', { ascending: false })
+        ]);
+
+        if (optData.data?.length > 0) {
+          setOptions(optData.data.map(o => ({ option_name: o.option_name, description: o.description, price: o.price })));
+          const selected = optData.data.find(o => o.is_selected === true);
+          if (selected) setSelectedOption(selected);
+        }
+
+        setExistingComments(commData.data || []);
+        setExistingPhotos(photoData.data || []);
+
+      } catch (err) {
+        console.error('Critical Error:', err);
+      } finally {
+        setLoading(false);
       }
-
-      const { data: bData } = await supabase.from('bookings').select('*').eq('id', id).single();
-      if (!bData) return setLoading(false);
-      setBooking(bData);
-      setNoteStage(bData.status);
-
-      const [optData, commData, photoData] = await Promise.all([
-        supabase.from('repair_options').select('*').eq('booking_id', id),
-        supabase.from('repair_comments').select('*').eq('booking_id', id).order('created_at', { ascending: false }),
-        supabase.from('part_documentation').select('*').eq('booking_id', id).order('created_at', { ascending: false })
-      ]);
-
-      if (optData.data?.length > 0) {
-        setOptions(optData.data.map(o => ({ option_name: o.option_name, description: o.description, price: o.price })));
-        const selected = optData.data.find(o => o.is_selected === true);
-        if (selected) setSelectedOption(selected);
-      }
-
-      setExistingComments(commData.data || []);
-      setExistingPhotos(photoData.data || []);
-
-      setLoading(false);
     }
-    if (id) fetchAllData();
-  }, [id]);
+
+    if (id) checkAuthAndFetch();
+  }, [id, router]);
 
   const runAction = async (action, data) => {
     setStatusMsg(`Syncing: ${action}...`);
@@ -104,7 +132,6 @@ export default function AdvancedAdminManagement() {
     finally { setIsUploading(false); }
   };
 
-  // Helper functions for options
   const addOption = () => {
     setOptions([...options, { option_name: '', description: '', price: '' }]);
   };
@@ -119,7 +146,16 @@ export default function AdvancedAdminManagement() {
     setOptions(options.filter((_, i) => i !== index));
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><Loader2 className="animate-spin text-blue-500" size={48} /></div>;
+  // While loading auth/data, show NOTHING but the loader.
+  // This prevents unauthenticated users from seeing a "flash" of the data.
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+      <div className="flex flex-col items-center gap-6">
+        <Loader2 className="animate-spin text-blue-500" size={64} />
+        <p className="text-xs font-black uppercase tracking-[0.4em] animate-pulse">Authenticating Admin Protocol...</p>
+      </div>
+    </div>
+  );
 
   const stages = ['BOOKED', 'PICKED_UP', 'DIAGNOSING', 'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'OUT_FOR_DELIVERY', 'DELIVERED'];
   const currentIndex = stages.indexOf(booking?.status);
@@ -154,7 +190,7 @@ export default function AdvancedAdminManagement() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 text-white">
 
           {/* COLUMN 1: CONTROLS & LOGS */}
-          <div className="space-y-6 text-white text-white">
+          <div className="space-y-6 text-white text-white text-white">
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4 text-white text-white">
               <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2"><RefreshCw size={14}/> Set Stage</h2>
               <div className="grid grid-cols-1 gap-2 text-white">
@@ -205,7 +241,7 @@ export default function AdvancedAdminManagement() {
                     </div>
                   ))}
                   {profile?.role === 'SUPER_ADMIN' && (
-                    <button onClick={addOption} className="w-full py-3 border-2 border-dashed border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:text-blue-500 hover:border-blue-500/50 transition-all flex items-center justify-center gap-2 text-white">
+                    <button onClick={addOption} className="w-full py-3 border-2 border-dashed border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:text-blue-500 hover:border-blue-500/50 transition-all flex items-center justify-center gap-2 text-white text-white text-white">
                        <Plus size={14}/> Add Another Path
                     </button>
                   )}
@@ -214,13 +250,13 @@ export default function AdvancedAdminManagement() {
               )}
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6 text-white text-white">
+            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6 text-white text-white text-white">
               <h2 className="text-sm font-black uppercase tracking-widest text-purple-500 flex items-center gap-2 text-white"><Camera size={16}/> Evidence Log</h2>
               <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-slate-800 rounded-3xl cursor-pointer hover:bg-slate-800/50 transition-all overflow-hidden relative text-white">
                 {partDoc.photo ? <img src={partDoc.photo} className="w-full h-full object-cover"/> : <div className="text-center space-y-2 text-white"><UploadCloud size={32} className="text-slate-700 mx-auto text-white"/><p className="text-[10px] font-black uppercase text-slate-600">Snap Photo</p></div>}
                 <input type="file" className="hidden text-white" onChange={e => handleUpload(e.target.files[0])}/>
               </label>
-              <div className="grid grid-cols-2 gap-4 text-white text-white text-white">
+              <div className="grid grid-cols-2 gap-4 text-white text-white text-white text-white">
                 <input placeholder="Label" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
                 <input placeholder="S/N" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
               </div>
@@ -232,7 +268,7 @@ export default function AdvancedAdminManagement() {
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-6 h-full max-h-[800px] overflow-y-auto scrollbar-none text-white text-white">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-2 sticky top-0 bg-slate-900 pb-2 z-10 text-white text-white"><History size={14}/> Records</h2>
               <div className="space-y-3 text-white text-white">{existingPhotos.map((p, i) => (<div key={i} className="group relative aspect-video rounded-xl overflow-hidden border border-slate-800 bg-slate-950 text-white"><img src={p.removed_part_photo} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all"/><p className="absolute bottom-2 left-2 text-[7px] font-black uppercase bg-black/60 px-1.5 py-0.5 rounded text-white">{p.removed_part_name}</p></div>))}</div>
-              <div className="space-y-3 border-t border-slate-800 pt-6 text-white text-white">{existingComments.map((c, i) => (<div key={i} className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-white"><p className="text-[7px] font-black text-blue-500 uppercase mb-1">{c.stage.replace(/_/g, ' ')}</p><p className="text-[10px] text-slate-400 font-medium italic">"{c.comment_text}"</p></div>))}</div>
+              <div className="space-y-3 border-t border-slate-800 pt-6 text-white text-white text-white">{existingComments.map((c, i) => (<div key={i} className="bg-slate-950 p-3 rounded-xl border border-slate-800"><p className="text-[7px] font-black text-blue-500 uppercase mb-1">{c.stage.replace(/_/g, ' ')}</p><p className="text-[10px] text-slate-400 font-medium italic">"{c.comment_text}"</p></div>))}</div>
             </div>
           </div>
 

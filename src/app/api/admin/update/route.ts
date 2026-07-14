@@ -6,12 +6,28 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const { action, bookingId, data } = await req.json();
+    const { action, bookingId, data, adminRole } = await req.json();
 
     if (action === 'UPDATE_STATUS') {
-      const updateData = { status: data.status };
+      // 1. Fetch current status to check for reversal
+      const { data: current } = await (supabaseAdmin as any)
+        .from('bookings')
+        .select('status')
+        .eq('id', bookingId)
+        .single();
 
-      // Ensure 'OUT_FOR_DELIVERY' saves the delivery window
+      const stages = ['BOOKED', 'PICKED_UP', 'DIAGNOSING', 'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+      const currentIndex = stages.indexOf(current.status);
+      const newIndex = stages.indexOf(data.status);
+
+      // 2. SECURITY LOCK: If trying to go backwards and NOT a SUPER_ADMIN -> BLOCK
+      if (newIndex < currentIndex && adminRole !== 'SUPER_ADMIN') {
+        return NextResponse.json({
+          error: 'SECURITY PROTOCOL: Only Super Admin can reverse a repair stage.'
+        }, { status: 403 });
+      }
+
+      const updateData = { status: data.status };
       if (data.status === 'OUT_FOR_DELIVERY' && data.deliveryWindow) {
         updateData.pickup_slot = data.deliveryWindow;
       }
@@ -20,14 +36,13 @@ export async function POST(req: Request) {
         .from('bookings')
         .update(updateData)
         .eq('id', bookingId);
-        
+
       if (error) throw error;
       return NextResponse.json({ success: true });
     }
 
     if (action === 'PUBLISH_OPTIONS') {
       await (supabaseAdmin as any).from('repair_options').delete().eq('booking_id', bookingId);
-
       const { error } = await (supabaseAdmin as any)
         .from('repair_options')
         .insert(data.options.map(opt => ({
@@ -36,7 +51,6 @@ export async function POST(req: Request) {
           description: opt.description,
           price: parseFloat(opt.price) || 0
         })));
-
       if (error) throw error;
       await (supabaseAdmin as any).from('bookings').update({ status: 'AWAITING_APPROVAL' }).eq('id', bookingId);
       return NextResponse.json({ success: true });
@@ -55,7 +69,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
-    // NEW: Action to handle stage-specific technician comments
     if (action === 'ADD_COMMENT') {
       const { error } = await (supabaseAdmin as any)
         .from('repair_comments')
@@ -71,7 +84,6 @@ export async function POST(req: Request) {
     if (action === 'ISSUE_WARRANTY') {
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + parseInt(data.days));
-
       const { error } = await (supabaseAdmin as any)
         .from('warranty_details')
         .upsert({

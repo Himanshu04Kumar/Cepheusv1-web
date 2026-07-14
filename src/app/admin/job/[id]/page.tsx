@@ -223,7 +223,7 @@ export default function AdvancedAdminManagement() {
             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6 text-white text-white">
               <div className="flex justify-between items-center text-white">
                 <h2 className="text-sm font-black uppercase tracking-widest text-amber-500 flex items-center gap-2 text-white"><AlertCircle size={16}/> Transparency Gate</h2>
-                {profile?.role === 'SUPER_ADMIN' && <button onClick={addOption} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all text-white"><Plus size={16}/></button>}
+                <button onClick={addOption} className="p-2 bg-amber-500/10 rounded-full text-amber-500 hover:bg-amber-500 hover:text-white transition-all text-white"><Plus size={16}/></button>
               </div>
               {selectedOption ? (
                 <div className="bg-green-600/10 border border-green-500/30 p-6 rounded-3xl flex justify-between items-center text-white text-white text-white">
@@ -240,11 +240,9 @@ export default function AdvancedAdminManagement() {
                       <div className="col-span-1 flex justify-end text-white"><button onClick={() => removeOption(i)} className="text-slate-700 hover:text-red-500 transition-colors"><Trash2 size={14}/></button></div>
                     </div>
                   ))}
-                  {profile?.role === 'SUPER_ADMIN' && (
-                    <button onClick={addOption} className="w-full py-3 border-2 border-dashed border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:text-blue-500 hover:border-blue-500/50 transition-all flex items-center justify-center gap-2 text-white text-white text-white">
+                  <button onClick={addOption} className="w-full py-3 border-2 border-dashed border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:text-blue-500 hover:border-blue-500/50 transition-all flex items-center justify-center gap-2 text-white text-white text-white">
                        <Plus size={14}/> Add Another Path
-                    </button>
-                  )}
+                  </button>
                   <button onClick={() => runAction('PUBLISH_OPTIONS', { options })} className="w-full bg-amber-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-amber-500">Publish Options</button>
                 </div>
               )}

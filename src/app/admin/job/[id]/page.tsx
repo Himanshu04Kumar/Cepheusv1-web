@@ -127,7 +127,7 @@ export default function AdvancedAdminManagement() {
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8 transition-colors">
       <div className="max-w-7xl mx-auto space-y-8">
-        <Link href="/admin" className="text-slate-500 hover:text-white flex items-center gap-2 mb-4"><ArrowLeft size={16} /> Dashboard</Link>
+        <Link href="/admin" className="text-slate-500 hover:text-white flex items-center gap-2 mb-4 text-white"><ArrowLeft size={16} /> Dashboard</Link>
 
         <div className="flex justify-between items-end border-b border-slate-900 pb-8 text-white text-white">
           <div>
@@ -145,10 +145,10 @@ export default function AdvancedAdminManagement() {
 
         {/* CONTEXT BAR */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-white">
-           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Hardware</p><p className="text-xs font-bold text-slate-200">{booking?.device_brand} {booking?.device_model}</p></div>
-           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Mobile</p><p className="text-xs font-bold">{booking?.customer_phone}</p></div>
-           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Logged On</p><p className="text-xs font-bold">{new Date(booking?.created_at).toLocaleDateString('en-IN')}</p></div>
-           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Registry ID</p><p className="text-xs font-mono font-bold text-blue-400 uppercase">{id.slice(0,8)}</p></div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Hardware</p><p className="text-xs font-bold text-slate-200">{booking?.device_brand} {booking?.device_model}</p></div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Mobile</p><p className="text-xs font-bold">{booking?.customer_phone}</p></div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Logged On</p><p className="text-xs font-bold">{new Date(booking?.created_at).toLocaleDateString('en-IN')}</p></div>
+           <div className="bg-slate-900 p-5 rounded-[1.5rem] border border-slate-800/50 shadow-xl text-white text-white"><p className="text-[10px] text-slate-500 uppercase font-black mb-1">Registry ID</p><p className="text-xs font-mono font-bold text-blue-400 uppercase">{id.slice(0,8)}</p></div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 text-white">
@@ -205,7 +205,7 @@ export default function AdvancedAdminManagement() {
                     </div>
                   ))}
                   {profile?.role === 'SUPER_ADMIN' && (
-                    <button onClick={addOption} className="w-full py-3 border-2 border-dashed border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:text-blue-500 hover:border-blue-500/50 transition-all flex items-center justify-center gap-2">
+                    <button onClick={addOption} className="w-full py-3 border-2 border-dashed border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-600 hover:text-blue-500 hover:border-blue-500/50 transition-all flex items-center justify-center gap-2 text-white">
                        <Plus size={14}/> Add Another Path
                     </button>
                   )}
@@ -214,13 +214,13 @@ export default function AdvancedAdminManagement() {
               )}
             </div>
 
-            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6 text-white">
+            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-2xl space-y-6 text-white text-white">
               <h2 className="text-sm font-black uppercase tracking-widest text-purple-500 flex items-center gap-2 text-white"><Camera size={16}/> Evidence Log</h2>
               <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-slate-800 rounded-3xl cursor-pointer hover:bg-slate-800/50 transition-all overflow-hidden relative text-white">
                 {partDoc.photo ? <img src={partDoc.photo} className="w-full h-full object-cover"/> : <div className="text-center space-y-2 text-white"><UploadCloud size={32} className="text-slate-700 mx-auto text-white"/><p className="text-[10px] font-black uppercase text-slate-600">Snap Photo</p></div>}
                 <input type="file" className="hidden text-white" onChange={e => handleUpload(e.target.files[0])}/>
               </label>
-              <div className="grid grid-cols-2 gap-4 text-white">
+              <div className="grid grid-cols-2 gap-4 text-white text-white text-white">
                 <input placeholder="Label" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
                 <input placeholder="S/N" className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs outline-none focus:ring-1 ring-purple-500 text-white text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
               </div>
@@ -230,9 +230,9 @@ export default function AdvancedAdminManagement() {
 
           <div className="space-y-6 text-white text-white">
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-6 h-full max-h-[800px] overflow-y-auto scrollbar-none text-white text-white">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-2 sticky top-0 bg-slate-900 pb-2 z-10 text-white"><History size={14}/> Records</h2>
+              <h2 className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-2 sticky top-0 bg-slate-900 pb-2 z-10 text-white text-white"><History size={14}/> Records</h2>
               <div className="space-y-3 text-white text-white">{existingPhotos.map((p, i) => (<div key={i} className="group relative aspect-video rounded-xl overflow-hidden border border-slate-800 bg-slate-950 text-white"><img src={p.removed_part_photo} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all"/><p className="absolute bottom-2 left-2 text-[7px] font-black uppercase bg-black/60 px-1.5 py-0.5 rounded text-white">{p.removed_part_name}</p></div>))}</div>
-              <div className="space-y-3 border-t border-slate-800 pt-6 text-white text-white">{existingComments.map((c, i) => (<div key={i} className="bg-slate-950 p-3 rounded-xl border border-slate-800"><p className="text-[7px] font-black text-blue-500 uppercase mb-1">{c.stage.replace(/_/g, ' ')}</p><p className="text-[10px] text-slate-400 font-medium italic">"{c.comment_text}"</p></div>))}</div>
+              <div className="space-y-3 border-t border-slate-800 pt-6 text-white text-white">{existingComments.map((c, i) => (<div key={i} className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-white"><p className="text-[7px] font-black text-blue-500 uppercase mb-1">{c.stage.replace(/_/g, ' ')}</p><p className="text-[10px] text-slate-400 font-medium italic">"{c.comment_text}"</p></div>))}</div>
             </div>
           </div>
 

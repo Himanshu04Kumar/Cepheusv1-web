@@ -17,20 +17,19 @@ export default function AdminDashboard() {
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const router = useRouter();
 
-  // Staff creation form
   const [staffEmail, setStaffEmail] = useState('');
   const [staffPass, setStaffPass] = useState('');
   const [creatingStaff, setCreatingStaff] = useState(false);
 
   const columns = [
-    { id: 'BOOKED', title: 'New Bookings', color: 'blue' },
-    { id: 'PICKED_UP', title: 'Picked Up', color: 'indigo' },
-    { id: 'DIAGNOSING', title: 'Diagnosing', color: 'purple' },
-    { id: 'AWAITING_APPROVAL', title: 'Awaiting Approval', color: 'amber' },
-    { id: 'IN_REPAIR', title: 'In Repair', color: 'blue' },
-    { id: 'QUALITY_CHECK', color: 'cyan', title: 'Quality Check' },
-    { id: 'OUT_FOR_DELIVERY', color: 'orange', title: 'Out For Delivery' },
-    { id: 'DELIVERED', title: 'Completed', color: 'green' },
+    { id: 'BOOKED', title: 'New Bookings' },
+    { id: 'PICKED_UP', title: 'Picked Up' },
+    { id: 'DIAGNOSING', title: 'Diagnosing' },
+    { id: 'AWAITING_APPROVAL', title: 'Awaiting Approval' },
+    { id: 'IN_REPAIR', title: 'In Repair' },
+    { id: 'QUALITY_CHECK', title: 'Quality Check' },
+    { id: 'OUT_FOR_DELIVERY', title: 'Out For Delivery' },
+    { id: 'DELIVERED', title: 'Completed' },
   ];
 
   const fetchStaff = async () => {
@@ -95,11 +94,30 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error(data.error);
       alert('Account Deployed!');
       await fetchStaff();
-      setShowStaffModal(false);
+      setStaffEmail('');
+      setStaffPass('');
     } catch (err) {
       alert(`Error: ${err.message}`);
     } finally {
       setCreatingStaff(false);
+    }
+  };
+
+  const handleDeleteStaff = async (userId: string, email: string) => {
+    if (email === profile?.email) return alert("Cannot delete your own Super Admin account.");
+    if (!confirm(`Are you sure you want to delete ${email}?`)) return;
+
+    try {
+      const res = await fetch('/api/admin/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_EMPLOYEE', userId }),
+      });
+      if (!res.ok) throw new Error('API Error');
+      alert('Staff deleted.');
+      await fetchStaff();
+    } catch (err) {
+      alert('Failed to delete staff.');
     }
   };
 
@@ -113,19 +131,59 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-white transition-colors relative selection:bg-blue-500/30">
 
-      {/* Staff Modal */}
+      {/* Staff Modal - FIXED: Now shows existing staff list */}
       {showStaffModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] w-full max-w-md shadow-2xl space-y-6">
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] w-full max-w-4xl shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto text-white">
             <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-              <h2 className="text-xl font-black uppercase tracking-tighter">Staff Directory</h2>
+              <div className="flex items-center gap-3">
+                 <Shield className="text-blue-500" size={24} />
+                 <h2 className="text-xl font-black uppercase tracking-tighter">Personnel Directory</h2>
+              </div>
               <button onClick={() => setShowStaffModal(false)} className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-500"><X size={24}/></button>
             </div>
-            <form onSubmit={handleCreateStaff} className="space-y-4">
-               <input required type="email" placeholder="Work Email" className="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
-               <input required type="text" placeholder="Protocol Key" className="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
-               <button disabled={creatingStaff} type="submit" className="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all">Deploy Account</button>
-            </form>
+
+            <div className="grid md:grid-cols-2 gap-12">
+               {/* SECTION 1: CREATE NEW */}
+               <div className="space-y-6 order-2 md:order-1">
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-black uppercase text-blue-500 tracking-widest">Initialize New Agent</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">Deploy secure login credentials</p>
+                  </div>
+                  <form onSubmit={handleCreateStaff} className="space-y-4">
+                    <input required type="email" placeholder="Work Email" className="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
+                    <input required type="text" placeholder="Protocol Key" className="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 ring-blue-500" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
+                    <button disabled={creatingStaff} type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2">
+                      {creatingStaff ? <Loader2 className="animate-spin" size={18}/> : 'Deploy Account'}
+                    </button>
+                  </form>
+               </div>
+
+               {/* SECTION 2: LIST EXISTING (FIXED) */}
+               <div className="space-y-6 order-1 md:order-2">
+                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest">Active Deployments ({staffList.length})</h3>
+                  <div className="space-y-3">
+                    {staffList.map((s) => (
+                      <div key={s.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between group hover:border-blue-500/30 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-black text-slate-400">
+                            {s.email.substring(0,1).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-300">{s.email}</p>
+                            <p className={`text-[8px] font-black tracking-[0.2em] uppercase ${s.role === 'SUPER_ADMIN' ? 'text-blue-500' : 'text-slate-600'}`}>{s.role}</p>
+                          </div>
+                        </div>
+                        {s.role !== 'SUPER_ADMIN' && (
+                          <button onClick={() => handleDeleteStaff(s.id, s.email)} className="p-2 text-slate-700 hover:text-red-500 transition-colors">
+                            <Trash2 size={16}/>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+               </div>
+            </div>
           </div>
         </div>
       )}
@@ -153,16 +211,16 @@ export default function AdminDashboard() {
 
       <main className="flex-1 p-6 space-y-8 max-w-6xl mx-auto w-full">
 
-        {/* Ops Navigator - Mobile First Grid */}
+        {/* Navigator Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">Navigator</h2>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Select stage to view units</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Select sector to view units</p>
             </div>
             {selectedStage && (
               <button onClick={() => setSelectedStage(null)} className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-1 hover:underline">
-                View All Stages <ChevronRight size={12}/>
+                View All Sectors <ChevronRight size={12}/>
               </button>
             )}
           </div>
@@ -208,7 +266,7 @@ export default function AdminDashboard() {
                              <span className="text-[9px] font-mono text-slate-600 uppercase font-black tracking-tighter bg-slate-950 px-2 py-0.5 rounded border border-white/5">{booking.id.slice(0, 8)}</span>
                              <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{new Date(booking.created_at).toLocaleDateString('en-IN')}</span>
                           </div>
-                          <h4 className="text-lg font-black uppercase tracking-tighter">{booking.customer_name}</h4>
+                          <h4 className="text-lg font-black uppercase tracking-tighter text-white">{booking.customer_name}</h4>
                           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{booking.device_brand} {booking.device_model}</p>
                        </div>
                        <div className="w-12 h-12 rounded-2xl bg-slate-950 border border-white/5 flex items-center justify-center text-slate-700 group-hover:text-blue-500 group-hover:border-blue-500/20 transition-all">
@@ -217,13 +275,6 @@ export default function AdminDashboard() {
                     </div>
                   </Link>
                 ))}
-
-                {bookings.filter(b => b.status === selectedStage).length === 0 && (
-                  <div className="h-40 flex flex-col items-center justify-center bg-slate-900/50 border border-dashed border-white/10 rounded-3xl space-y-2">
-                    <p className="text-[10px] font-black uppercase text-slate-700 tracking-widest">No active units in this sector</p>
-                    <button onClick={() => setSelectedStage(null)} className="text-[10px] font-black uppercase text-blue-500 hover:underline">Return to Registry</button>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -231,7 +282,7 @@ export default function AdminDashboard() {
       </main>
 
       <div className="p-6 text-center">
-         <p className="text-[8px] font-black uppercase tracking-[0.5em] text-slate-800">Cepheus Ops Command v2.0 · Secure Link Active</p>
+         <p className="text-[8px] font-black uppercase tracking-[0.5em] text-slate-800 italic">Cepheus Ops Command · Verified Session</p>
       </div>
     </div>
   );

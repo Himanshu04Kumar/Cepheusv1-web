@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check, Trash2, ChevronRight, LayoutGrid, List, History, UserCog, Activity } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check, Trash2, ChevronRight, LayoutGrid, List, History, UserCog, Activity, PhoneCall } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [staffList, setStaffList] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [callbackRequests, setCallbackRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
@@ -44,6 +45,17 @@ export default function AdminDashboard() {
     if (data) setActivityLogs(data);
   };
 
+  const fetchCallbacks = async () => {
+    // Fetch comments that indicate a callback request
+    const { data } = await supabase
+      .from('repair_comments')
+      .select('*, bookings(customer_name, customer_phone, device_model)')
+      .ilike('comment_text', '%CUSTOMER REQUESTED A CALLBACK%')
+      .order('created_at', { ascending: false });
+
+    if (data) setCallbackRequests(data);
+  };
+
   const fetchBookings = async () => {
     const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
     if (data) setBookings(data);
@@ -55,7 +67,12 @@ export default function AdminDashboard() {
       if (!session) { router.push('/login'); return; }
       const { data: prof } = await supabase.from('admin_profiles').select('*').eq('id', session.user.id).single();
       setProfile(prof);
-      await fetchBookings();
+
+      await Promise.all([
+        fetchBookings(),
+        fetchCallbacks()
+      ]);
+
       if (prof?.role === 'SUPER_ADMIN') {
         await fetchStaff();
         await fetchLogs();
@@ -63,7 +80,13 @@ export default function AdminDashboard() {
       setLoading(false);
     }
     init();
-    const channel = supabase.channel('admin_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchBookings()).subscribe();
+
+    // Real-time subscription for comments to catch new callbacks
+    const channel = supabase.channel('dashboard_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchBookings())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'repair_comments' }, () => fetchCallbacks())
+      .subscribe();
+
     return () => supabase.removeChannel(channel);
   }, [router]);
 
@@ -77,7 +100,6 @@ export default function AdminDashboard() {
         body: JSON.stringify({ action: 'RESET_PASSWORD', userId, password: newPass }),
       });
       if (res.ok) alert("Success.");
-      else alert("Failed.");
     } catch (err) { alert("Error."); }
   };
 
@@ -116,17 +138,15 @@ export default function AdminDashboard() {
 
       {showStaffModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto text-white">
-          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-7xl shadow-2xl space-y-12 my-8 text-white">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-6 text-white">
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-7xl shadow-2xl space-y-12 my-8 text-white text-white text-white">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-6">
               <div className="flex items-center gap-3">
                  <Shield className="text-blue-500" size={32} />
                  <div><h2 className="text-2xl font-black uppercase tracking-tighter text-white">Oversight Command</h2><p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Personnel & Audit Logs</p></div>
               </div>
-              <button onClick={() => setShowStaffModal(false)} className="p-3 hover:bg-slate-800 rounded-full transition-colors text-slate-500 hover:text-white"><X size={28}/></button>
+              <button onClick={() => setShowStaffModal(false)} className="p-3 hover:bg-slate-800 rounded-full transition-colors text-slate-500"><X size={28}/></button>
             </div>
-
-            <div className="grid lg:grid-cols-3 gap-12 text-white">
-               {/* 1. INITIALIZE AGENT (ADD) */}
+            <div className="grid lg:grid-cols-3 gap-12">
                <div className="space-y-6 bg-slate-950 p-8 rounded-[2rem] border border-slate-800/50">
                   <h3 className="text-xs font-black uppercase text-blue-500 tracking-widest flex items-center gap-2"><Plus size={14}/> Deploy New Agent</h3>
                   <form onSubmit={handleCreateStaff} className="space-y-4">
@@ -135,15 +155,13 @@ export default function AdminDashboard() {
                     <button disabled={creatingStaff} type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20">{creatingStaff ? <Loader2 className="animate-spin mx-auto"/> : 'Deploy Account'}</button>
                   </form>
                </div>
-
-               {/* 2. ACTIVE AGENTS (LIST/DELETE/RESET) */}
                <div className="space-y-6">
                   <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><UserCog size={14}/> Agent Directory</h3>
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
                     {staffList.map((s) => (
                       <div key={s.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between group hover:border-blue-500/30 transition-all">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-black text-slate-400 group-hover:text-blue-400">{s.email.substring(0,1).toUpperCase()}</div>
+                          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-black text-slate-400 group-hover:text-blue-400 text-white">{s.email.substring(0,1).toUpperCase()}</div>
                           <div className="max-w-[120px]"><p className="text-xs font-bold text-slate-300 truncate">{s.email}</p><p className={`text-[8px] font-black uppercase ${s.role === 'SUPER_ADMIN' ? 'text-blue-500' : 'text-slate-600'}`}>{s.role}</p></div>
                         </div>
                         <div className="flex gap-1">
@@ -158,8 +176,6 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                </div>
-
-               {/* 3. AUDIT LOG */}
                <div className="space-y-6">
                   <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Activity size={14}/> Audit Trail</h3>
                   <div className="bg-slate-950/50 rounded-3xl border border-slate-800/50 p-4 overflow-hidden shadow-inner">
@@ -182,22 +198,54 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-4">
           <Link href="/" className="text-slate-500 hover:text-white transition-colors"><ArrowLeft size={20} /></Link>
           <div className="h-8 w-px bg-slate-800" />
-          <h1 className="text-xl font-black tracking-tighter uppercase italic text-white">Ops Command</h1>
+          <h1 className="text-xl font-black tracking-tighter uppercase italic text-white text-white">Ops Command</h1>
         </div>
         <div className="flex items-center gap-2">
           {profile?.role === 'SUPER_ADMIN' && (
-            <button onClick={() => setShowStaffModal(true)} className="p-2.5 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 px-3">
+            <button onClick={() => setShowStaffModal(true)} className="p-2.5 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2 px-3 text-white">
               <History size={18} />
               <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Oversight</span>
             </button>
           )}
-          <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"><LogOut size={18} /></button>
+          <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors text-white"><LogOut size={18} /></button>
         </div>
       </header>
 
-      <main className="flex-1 p-6 space-y-8 max-w-6xl mx-auto w-full text-white">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+      <main className="flex-1 p-6 space-y-12 max-w-7xl mx-auto w-full text-white text-white">
+
+        {/* NEW: PRIORITY CALL ASSISTANCE ALERTS */}
+        {callbackRequests.length > 0 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-700 text-white text-white text-white">
+             <div className="flex items-center gap-2 px-1">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                <h3 className="text-xs font-black uppercase text-red-500 tracking-widest">Support Alerts ({callbackRequests.length})</h3>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {callbackRequests.map((req) => (
+                  <Link key={req.id} href={`/admin/job/${req.booking_id}`}>
+                    <div className="bg-red-500/5 border border-red-500/20 p-5 rounded-[2rem] hover:bg-red-500/10 transition-all group relative overflow-hidden text-white text-white text-white">
+                       <div className="flex justify-between items-start mb-4">
+                          <div className="p-2.5 bg-red-500/20 rounded-xl text-red-500">
+                             <PhoneCall size={20}/>
+                          </div>
+                          <span className="text-[8px] font-black text-red-500/50 uppercase tracking-widest">{new Date(req.created_at).toLocaleTimeString()}</span>
+                       </div>
+                       <h4 className="text-lg font-black uppercase tracking-tighter text-white">{req.bookings.customer_name}</h4>
+                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{req.bookings.device_model}</p>
+                       <div className="mt-6 pt-4 border-t border-red-500/10 flex justify-between items-center">
+                          <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Call: {req.bookings.customer_phone}</span>
+                          <ChevronRight size={16} className="text-red-500 group-hover:translate-x-1 transition-transform"/>
+                       </div>
+                    </div>
+                  </Link>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {/* Navigator Section */}
+        <div className="space-y-4 text-white text-white text-white">
+          <div className="flex items-center justify-between px-1">
             <div><h2 className="text-2xl font-black uppercase tracking-tighter text-white">Navigator</h2><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Select sector to view units</p></div>
             {selectedStage && <button onClick={() => setSelectedStage(null)} className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-1 hover:underline text-white">View All Sectors <ChevronRight size={12}/></button>}
           </div>
@@ -236,6 +284,7 @@ export default function AdminDashboard() {
           )}
         </div>
       </main>
+      <div className="p-6 text-center text-white"><p className="text-[8px] font-black uppercase tracking-[0.5em] text-slate-800 italic">Cepheus Ops Command · Verified Session</p></div>
     </div>
   );
 }

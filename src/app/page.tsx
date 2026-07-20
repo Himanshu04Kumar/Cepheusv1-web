@@ -54,7 +54,7 @@ export default function HomePage() {
                 { label: 'Track Your Repair', href: '/track' }
               ]} />
               <NavGroup label="Partnerships" links={[
-                { label: 'Institutional Solutions', href: '#' }
+                { label: 'Institutional Solutions', href: '/institutional' }
               ]} />
               <NavGroup label="Resources" links={[
                 { label: 'FAQs', href: '#' },
@@ -62,6 +62,10 @@ export default function HomePage() {
               ]} />
               <NavGroup label="Support" links={[
                 { label: 'Get in Touch', href: '#' }
+              ]} />
+              <NavGroup label="Infrastructure" links={[
+                { label: 'NOX Labs', href: '/nox-labs' },
+                { label: 'NOX Compute', href: '/nox-compute' }
               ]} />
             </div>
 
@@ -80,7 +84,7 @@ export default function HomePage() {
         <div className="space-y-8 text-left animate-in slide-in-from-bottom-8 duration-1000">
           <h1 className="text-[2.75rem] md:text-[4rem] font-extrabold leading-[1.1] tracking-tight text-[#09090b]">
             Fix your device.<br/>
-            <span className="bg-gradient-to-b from-[#09090b] to-[#4b5563] bg-clip-text text-transparent">Without the anxiety.</span>
+            <span className="bg-gradient-to-b from-[#09090b] to-[#4b5563] bg-clip-text text-transparent italic">Without the anxiety.</span>
           </h1>
 
           <p className="text-[13px] md:text-sm font-semibold text-[#6b7280] tracking-wide uppercase">
@@ -152,7 +156,7 @@ export default function HomePage() {
         </div>
 
         <div className="bg-white border border-black/5 rounded-2xl p-12 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative text-[#09090b]">
              <WorkflowStep number="01" title="Book a Repair" text="Choose a convenient pickup slot from your home or campus." />
              <WorkflowStep number="02" title="Doorstep Inspection" text="We verify basic device conditions at your door and log it." />
              <WorkflowStep number="03" title="Live Diagnosis" text="Review itemized costs and approve the fix at your Tracking Portal." />
@@ -167,7 +171,7 @@ export default function HomePage() {
               <h4 className="text-lg font-bold text-[#09090b]">Managing devices for a school or office?</h4>
               <p className="text-sm text-[#4b5563] mt-2 leading-relaxed">We provide dedicated frameworks for institutional clients—featuring itemized audit trails, pre-approved pricing lists, and consolidated monthly invoicing.</p>
            </div>
-           <button className="bg-white text-[#09090b] border border-black/10 px-6 py-3 rounded-lg font-bold text-[13px] whitespace-nowrap hover:bg-slate-50 transition-all">Explore Enterprise Solutions &rarr;</button>
+           <Link href="/institutional" className="bg-white text-[#09090b] border border-black/10 px-6 py-3 rounded-lg font-bold text-[13px] whitespace-nowrap hover:bg-slate-50 transition-all no-underline">Explore Enterprise Solutions &rarr;</Link>
         </div>
       </main>
 
@@ -181,18 +185,18 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-3 md:grid-cols-3 gap-8 md:col-span-3">
-              <FooterCol title="Operations" links={['Book a Repair', 'Track Your Repair', 'Institutional Solutions']} />
-              <FooterCol title="Ecosystem" links={['NOX Labs', 'NOX Compute']} />
-              <FooterCol title="Framework" links={['Privacy Policy', 'Terms of Service', 'Audit Guidelines']} />
+              <FooterCol title="Operations" links={[{label: 'Book a Repair', href: '/book'}, {label: 'Track Your Repair', href: '/track'}, {label: 'Institutional Solutions', href: '/institutional'}]} />
+              <FooterCol title="Ecosystem" links={[{label: 'NOX Labs', href: '/nox-labs'}, {label: 'NOX Compute', href: '/nox-compute'}]} />
+              <FooterCol title="Framework" links={[{label: 'Privacy Policy', href: '#'}, {label: 'Terms of Service', href: '#'}, {label: 'Audit Guidelines', href: '#'}]} />
             </div>
           </div>
 
           <div className="border-t border-black/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-[10px] font-mono text-[#6b6c76]">&copy; 2026 Cepheus. All rights reserved.</p>
-            <div className="flex gap-4">
-              <SocialBtn icon={<Instagram size={16}/>} />
-              <SocialBtn icon={<Linkedin size={16}/>} />
-              <SocialBtn icon={<Mail size={16}/>} />
+            <div className="flex gap-4 text-[#4b5563]">
+              <Instagram size={16} className="hover:text-[#09090b] cursor-pointer" />
+              <Linkedin size={16} className="hover:text-[#09090b] cursor-pointer" />
+              <Mail size={16} className="hover:text-[#09090b] cursor-pointer" />
             </div>
           </div>
         </div>
@@ -237,7 +241,7 @@ function NavGroup({ label, links }) {
       <span className="text-[10px] font-black text-[#6b6c76] tracking-widest uppercase">{label}</span>
       <div className="flex flex-col gap-3">
         {links.map((link, i) => (
-          <Link key={i} href={link.href} className="text-lg font-bold text-[#09090b] hover:text-indigo-600 transition-colors">{link.label}</Link>
+          <Link key={i} href={link.href} className="text-lg font-bold text-[#09090b] hover:text-indigo-600 transition-colors no-underline">{link.label}</Link>
         ))}
       </div>
     </div>
@@ -250,17 +254,9 @@ function FooterCol({ title, links }) {
       <h5 className="text-[11px] font-black text-[#09090b] uppercase tracking-wider">{title}</h5>
       <div className="flex flex-col gap-2.5">
         {links.map((l, i) => (
-          <a key={i} href="#" className="text-[12px] text-[#4b5563] hover:text-[#09090b] transition-colors">{l}</a>
+          <Link key={i} href={l.href} className="text-[12px] text-[#4b5563] hover:text-[#09090b] transition-colors no-underline">{l.label}</Link>
         ))}
       </div>
     </div>
-  );
-}
-
-function SocialBtn({ icon }) {
-  return (
-    <button className="w-9 h-9 rounded-lg bg-black/[0.03] border border-black/5 flex items-center justify-center text-[#4b5563] hover:bg-white hover:text-indigo-600 hover:border-black/10 hover:-translate-y-1 transition-all">
-      {icon}
-    </button>
   );
 }

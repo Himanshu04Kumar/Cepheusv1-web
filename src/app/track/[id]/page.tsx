@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck, MessageSquare, ChevronDown, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck, MessageSquare, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -80,25 +80,6 @@ export default function AdvancedTrackingPage() {
     } catch (e) { alert('Payment Error'); }
   };
 
-  const handleRequestCallback = async () => {
-    try {
-      const res = await fetch('/api/admin/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'CALLBACK_REQUEST',
-          bookingId: booking.id
-        }),
-      });
-      if (res.ok) {
-        alert('CALLBACK LOGGED: Our technical lead will call you on your registered number shortly.');
-        window.location.reload();
-      }
-    } catch (e) {
-      alert('Sync Failed. Please try again.');
-    }
-  };
-
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600"><Loader2 className="animate-spin" size={48} /></div>;
   if (!booking) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-[#09090b] dark:text-white p-8"><h1>Booking Not Found</h1><Link href="/">Home</Link></div>;
 
@@ -126,7 +107,7 @@ export default function AdvancedTrackingPage() {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-black/5 dark:border-white/5 pb-8">
-          <h1 className="text-4xl font-black uppercase tracking-tighter text-indigo-600 dark:text-indigo-400 italic">Registry Status</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tighter text-indigo-600 dark:text-indigo-400 italic">Repair Status</h1>
           <div className="flex flex-wrap gap-3">
               <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-sm"><Hash size={12} className="text-slate-400"/><span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase">{booking.id.slice(0, 8)}</span></div>
               <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-sm"><Phone size={12} className="text-slate-400"/><span className="text-[10px] font-bold">{booking?.customer_phone}</span></div>
@@ -205,9 +186,6 @@ export default function AdvancedTrackingPage() {
                                  </div>
                               ))}
                            </div>
-                           <button onClick={(e) => { e.stopPropagation(); handleRequestCallback(); }} className="w-full bg-white dark:bg-slate-900 border border-indigo-600/30 text-indigo-600 dark:text-indigo-400 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
-                              Request Technical Callback
-                           </button>
                         </div>
                       )}
 

@@ -2,10 +2,11 @@
 'use client';
 
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function NoxComputePage() {
   return (
-    <div className="min-h-screen bg-[#030407] text-[#EDEFF4] font-sans selection:bg-[#6FE7FF]/30 overflow-x-hidden relative">
+    <div className="min-h-screen bg-[#030407] text-[#EDEFF4] font-sans selection:bg-[#6FE7FF]/30 overflow-x-hidden relative transition-colors duration-500">
 
       {/* Starfield Background */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-50">
@@ -25,19 +26,25 @@ export default function NoxComputePage() {
       </div>
 
       {/* HUD Brackets */}
-      <div className="fixed top-[22px] left-[22px] w-[22px] h-[22px] border-t border-l border-white/16 z-10 pointer-events-none hidden md:block" />
-      <div className="fixed top-[22px] right-[22px] w-[22px] h-[22px] border-t border-r border-white/16 z-10 pointer-events-none hidden md:block" />
-      <div className="fixed bottom-[22px] left-[22px] w-[22px] h-[22px] border-b border-l border-white/16 z-10 pointer-events-none hidden md:block" />
-      <div className="fixed bottom-[22px] right-[22px] w-[22px] h-[22px] border-b border-r border-white/16 z-10 pointer-events-none hidden md:block" />
+      <div className="fixed top-[22px] left-[22px] w-[22px] h-[22px] border-t border-l border-white/20 z-10 pointer-events-none hidden md:block" />
+      <div className="fixed top-[22px] right-[22px] w-[22px] h-[22px] border-t border-r border-white/20 z-10 pointer-events-none hidden md:block" />
+      <div className="fixed bottom-[22px] left-[22px] w-[22px] h-[22px] border-b border-l border-white/20 z-10 pointer-events-none hidden md:block" />
+      <div className="fixed bottom-[22px] right-[22px] w-[22px] h-[22px] border-b border-r border-white/20 z-10 pointer-events-none hidden md:block" />
 
       {/* Telemetry */}
       <div className="fixed bottom-[26px] left-[54px] font-mono text-[10px] tracking-[0.12em] text-[#454A58] z-10 pointer-events-none hidden md:block">
         STATUS · PRE-LAUNCH
       </div>
 
-      <Link href="/" className="fixed top-[26px] left-[54px] font-mono text-[10px] tracking-[0.12em] text-[#767C8C] hover:text-[#6FE7FF] transition-all z-20 no-underline opacity-60 hover:opacity-100 uppercase">
-        ← CEPHEUS
-      </Link>
+      <div className="fixed top-[26px] left-[54px] z-20 flex items-center gap-6">
+        <Link href="/" className="font-mono text-[10px] tracking-[0.12em] text-[#767C8C] hover:text-[#6FE7FF] transition-all no-underline opacity-60 hover:opacity-100 uppercase">
+          ← CEPHEUS
+        </Link>
+      </div>
+
+      <div className="fixed top-[26px] right-[54px] z-20">
+        <ThemeToggle />
+      </div>
 
       <div className="relative z-10">
 
@@ -60,9 +67,9 @@ export default function NoxComputePage() {
           <p className="font-mono text-[11px] tracking-[0.32em] text-[#767C8C] uppercase mb-8">CEPHEUS</p>
           <h1 className="font-black text-[60px] md:text-[118px] tracking-[0.03em] leading-none m-0">NOX</h1>
           <p className="font-mono text-[13px] md:text-[15px] tracking-[0.4em] text-[#6FE7FF] uppercase mt-4 mb-8">Compute</p>
-          <p className="text-base leading-relaxed text-[#767C8C] max-w-[440px]">
+          <p className="text-base leading-relaxed text-[#767C8C] max-w-[440px] px-6">
             Enterprise infrastructure, advised and installed.<br/>
-            <strong className="text-white font-medium">Currently in private build.</strong>
+            <strong className="text-white font-medium uppercase tracking-widest text-[10px]">Currently in private build.</strong>
           </p>
         </section>
 
@@ -76,7 +83,7 @@ export default function NoxComputePage() {
             <h2 className="text-2xl md:text-3xl font-semibold mb-4 tracking-tight">Two ways in.</h2>
             <p className="text-[#767C8C] text-sm leading-relaxed max-w-[480px] mb-12">A light preview — full detail lands at launch.</p>
 
-            <div className="grid md:grid-cols-2 gap-[1px] bg-white/10 border border-white/10">
+            <div className="grid md:grid-cols-2 gap-[1px] bg-white/10 border border-white/10 overflow-hidden rounded-sm">
                <div className="bg-[#090B10] p-8 hover:bg-[#0D1017] transition-colors group">
                   <p className="font-mono text-[10px] tracking-[0.18em] text-[#6FE7FF] uppercase mb-6">Consult</p>
                   <h3 className="text-xl font-semibold mb-2">Advisory</h3>
@@ -90,8 +97,8 @@ export default function NoxComputePage() {
             </div>
 
             <div className="mt-14 flex justify-center">
-               <div className="font-mono text-[11px] tracking-[0.24em] text-[#767C8C] border border-white/16 px-5 py-2.5 flex items-center gap-2 uppercase">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B4A]" />
+               <div className="font-mono text-[11px] tracking-[0.24em] text-[#767C8C] border border-white/20 px-5 py-2.5 flex items-center gap-2 uppercase rounded-full bg-white/5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B4A] animate-pulse" />
                   Coming Soon
                </div>
             </div>
@@ -105,26 +112,26 @@ export default function NoxComputePage() {
             <h2 className="text-2xl md:text-3xl font-semibold mb-4 tracking-tight">Get notified at launch.</h2>
             <p className="text-[#767C8C] text-sm leading-relaxed max-w-[480px] mb-12">Leave your email, and we'll reach out the moment we're live — no spam, just one message when it matters.</p>
 
-            <div className="bg-[#090B10] border border-white/10 p-10 space-y-10">
+            <div className="bg-[#090B10] border border-white/10 p-10 space-y-10 rounded-xl">
                <form className="flex flex-col sm:flex-row gap-2" onSubmit={e => e.preventDefault()}>
-                  <input type="email" placeholder="you@company.com" className="flex-1 bg-[#030407] border border-white/10 p-3.5 text-sm outline-none focus:border-[#6FE7FF] transition-colors" required />
-                  <button className="font-mono text-[11px] tracking-[0.14em] uppercase border border-[#6FE7FF] text-[#6FE7FF] p-3.5 hover:bg-[#6FE7FF] hover:text-[#030407] transition-all">Notify me</button>
+                  <input type="email" placeholder="you@company.com" className="flex-1 bg-[#030407] border border-white/10 p-3.5 text-sm outline-none focus:border-[#6FE7FF] transition-colors rounded-sm" required />
+                  <button className="font-mono text-[11px] tracking-[0.14em] uppercase border border-[#6FE7FF] text-[#6FE7FF] p-3.5 hover:bg-[#6FE7FF] hover:text-[#030407] transition-all rounded-sm">Notify me</button>
                </form>
 
                <div className="flex items-center gap-4 text-[#454A58] font-mono text-[10px] tracking-[0.16em] uppercase after:content-[''] after:flex-1 after:h-px after:bg-white/10 before:content-[''] before:flex-1 before:h-px before:bg-white/10">
                   or tell us what you need
                </div>
 
-               <form className="space-y-6" onSubmit={e => e.preventDefault()}>
-                  <div>
+               <form className="space-y-6 text-white text-white text-white" onSubmit={e => e.preventDefault()}>
+                  <div className="text-white text-white text-white text-white text-white text-white">
                     <label className="font-mono text-[11px] tracking-[0.12em] text-[#767C8C] uppercase block mb-2.5">Name / Organisation</label>
-                    <input type="text" placeholder="Enter full name or entity title" className="w-full bg-[#030407] border border-white/10 p-3.5 text-sm outline-none focus:border-[#6FE7FF] transition-colors" required />
+                    <input type="text" placeholder="Enter full name or entity title" className="w-full bg-[#030407] border border-white/10 p-3.5 text-sm outline-none focus:border-[#6FE7FF] transition-colors rounded-sm text-white" required />
                   </div>
-                  <div>
+                  <div className="text-white text-white text-white text-white text-white text-white">
                     <label className="font-mono text-[11px] tracking-[0.12em] text-[#767C8C] uppercase block mb-2.5">What are you looking for?</label>
-                    <textarea placeholder="A few lines on your compute needs, timeline, or questions." className="w-full bg-[#030407] border border-white/10 p-3.5 text-sm outline-none focus:border-[#6FE7FF] transition-colors min-h-[90px]" required />
+                    <textarea placeholder="A few lines on your compute needs..." className="w-full bg-[#030407] border border-white/10 p-3.5 text-sm outline-none focus:border-[#6FE7FF] transition-colors min-h-[90px] rounded-sm text-white" required />
                   </div>
-                  <button className="font-mono text-[11px] tracking-[0.14em] uppercase border border-[#6FE7FF] text-[#6FE7FF] px-6 py-3.5 hover:bg-[#6FE7FF] hover:text-[#030407] transition-all">
+                  <button className="font-mono text-[11px] tracking-[0.14em] uppercase border border-[#6FE7FF] text-[#6FE7FF] px-6 py-3.5 hover:bg-[#6FE7FF] hover:text-[#030407] transition-all rounded-sm">
                     Send Requirements
                   </button>
                </form>
@@ -138,37 +145,27 @@ export default function NoxComputePage() {
                 <div className="font-mono text-[11px] tracking-[0.26em] text-[#454A58] uppercase mb-5 flex items-center gap-3">
                   Founding bench
                 </div>
-                <h2 className="text-2xl md:text-3xl font-semibold mb-3 tracking-tight">We're onboarding early.</h2>
-                <p className="text-[#767C8C] text-[13.5px] leading-relaxed">Looking for people who already think in racks, watts, and uptime, hardware backgrounds, hands-on experience, and a high bar for how infrastructure should be built.</p>
+                <h2 className="text-2xl md:text-3xl font-semibold mb-3 tracking-tight text-white text-white text-white">We're onboarding early.</h2>
+                <p className="text-[#767C8C] text-[13.5px] leading-relaxed text-white text-white">Looking for people who already think in racks, watts, and uptime.</p>
              </div>
-             <Link href="#" className="font-mono text-[12px] tracking-[0.08em] text-[#6FE7FF] border border-[#6FE7FF] px-[18px] py-[12px] hover:bg-[#6FE7FF] hover:text-[#030407] transition-all no-underline whitespace-nowrap">
+             <Link href="/coming-soon" className="font-mono text-[12px] tracking-[0.08em] text-[#6FE7FF] border border-[#6FE7FF] px-[18px] py-[12px] hover:bg-[#6FE7FF] hover:text-[#030407] transition-all no-underline whitespace-nowrap rounded-sm">
                 Reach out →
               </Link>
           </section>
 
         </div>
 
-        <footer className="py-12 md:py-16 text-center border-t border-white/10 opacity-40">
-          <p className="font-mono text-[10px] tracking-[0.1em] text-[#454A58] uppercase">NOX COMPUTE — CEPHEUS CONCEPT — IN PRIVATE BUILD</p>
+        <footer className="py-12 md:py-16 text-center border-t border-white/10 opacity-20 text-white text-white">
+          <p className="font-mono text-[10px] tracking-[0.1em] text-[#454A58] uppercase text-white text-white">NOX COMPUTE — CEPHEUS CONCEPT — IN PRIVATE BUILD</p>
         </footer>
 
       </div>
 
       <style jsx global>{`
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes spin-reverse-slow {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 90s linear infinite;
-        }
-        .animate-spin-reverse-slow {
-          animation: spin-reverse-slow 60s linear infinite;
-        }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin-reverse-slow { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        .animate-spin-slow { animation: spin-slow 90s linear infinite; }
+        .animate-spin-reverse-slow { animation: spin-reverse-slow 60s linear infinite; }
       `}</style>
     </div>
   );

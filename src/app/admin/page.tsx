@@ -178,7 +178,10 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex gap-1 shrink-0">
                           {s.role !== 'SUPER_ADMIN' && (
-                            <button onClick={() => handleDeleteStaff(s.id, s.email)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                            <>
+                                <button onClick={() => handleResetPassword(s.id, s.email)} className="p-1.5 text-slate-400 hover:text-blue-500 transition-colors"><Key size={14}/></button>
+                                <button onClick={() => handleDeleteStaff(s.id, s.email)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                            </>
                           )}
                         </div>
                       </div>

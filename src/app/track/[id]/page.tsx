@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck, MessageSquare, ChevronDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Package, Camera, AlertCircle, Phone, Calendar, Hash, Wrench, ShieldCheck, Loader2, Truck, MessageSquare, ChevronDown, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -91,12 +91,10 @@ export default function AdvancedTrackingPage() {
         alert('CALLBACK LOGGED: Our technical lead will call you on your registered number shortly.');
         window.location.reload();
       }
-    } catch (e) {
-      alert('Sync Failed. Please try again.');
-    }
+    } catch (e) { alert('Sync Failed.'); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600"><Loader2 className="animate-spin" size={48} /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600 transition-colors duration-500"><Loader2 className="animate-spin" size={48} /></div>;
   if (!booking) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-[#09090b] dark:text-white p-8"><h1>Booking Not Found</h1><Link href="/">Home</Link></div>;
 
   const stages = [
@@ -112,6 +110,9 @@ export default function AdvancedTrackingPage() {
 
   const currentStageIdx = stages.findIndex(s => s.id === booking.status);
 
+  // LOGIC: Check if callback already requested
+  const hasPendingCallback = comments.some(c => c.comment_text.includes('CUSTOMER REQUESTED A CALLBACK'));
+
   return (
     <div className="min-h-screen bg-[#fbfbfa] dark:bg-slate-950 text-[#09090b] dark:text-white font-sans selection:bg-indigo-500/30 transition-colors duration-500">
       <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-12">
@@ -126,7 +127,7 @@ export default function AdvancedTrackingPage() {
           <h1 className="text-4xl font-black uppercase tracking-tighter text-indigo-600 dark:text-indigo-400 italic">Repair Status</h1>
           <div className="flex flex-wrap gap-3">
               <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-sm"><Hash size={12} className="text-slate-400"/><span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter">{booking.id.slice(0, 8)}</span></div>
-              <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-sm"><Phone size={12} className="text-slate-400"/><span className="text-[10px] font-bold">{booking?.customer_phone}</span></div>
+              <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-sm"><Phone size={12} className="text-slate-400"/><span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{booking?.customer_phone}</span></div>
           </div>
         </div>
 
@@ -181,9 +182,9 @@ export default function AdvancedTrackingPage() {
                       ))}
 
                       {stage.id === 'BOOKED' && (
-                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-black/5 dark:border-white/5 text-[#09090b] dark:text-white">
-                           <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Hardware</p><p className="text-xs font-bold text-[#09090b] dark:text-white">{booking.device_brand} {booking.device_model}</p></div>
-                           <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Status</p><p className="text-xs font-bold text-green-600 uppercase">₹99 Verified</p></div>
+                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-black/5 dark:border-white/5">
+                           <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Hardware</p><p className="text-xs font-bold text-slate-800 dark:text-slate-200">{booking.device_brand} {booking.device_model}</p></div>
+                           <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Status</p><p className="text-xs font-bold text-green-600">₹99 Verified</p></div>
                         </div>
                       )}
 
@@ -203,9 +204,17 @@ export default function AdvancedTrackingPage() {
                               ))}
                            </div>
 
-                           <button onClick={(e) => { e.stopPropagation(); handleRequestCallback(); }} className="w-full bg-white dark:bg-slate-900 border border-indigo-600/30 text-indigo-600 dark:text-indigo-400 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
-                              Not Sure? Request Technical Callback
-                           </button>
+                           {/* SMART CALLBACK LOGIC: Hide button if pending */}
+                           {!hasPendingCallback ? (
+                             <button onClick={(e) => { e.stopPropagation(); handleRequestCallback(); }} className="w-full bg-white dark:bg-slate-900 border border-indigo-600/30 text-indigo-600 dark:text-indigo-400 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                                Not Sure? Request Technical Callback
+                             </button>
+                           ) : (
+                             <div className="w-full bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/30 py-4 rounded-2xl text-center flex items-center justify-center gap-3 animate-pulse">
+                                <Clock size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                <span className="text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Callback Requested · Agent Routing...</span>
+                             </div>
+                           )}
                         </div>
                       )}
 

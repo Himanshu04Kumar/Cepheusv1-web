@@ -72,10 +72,12 @@ export default function AdvancedAdminManagement() {
   }, [id, router]);
 
   const runAction = async (action, data) => {
-    // FOOLPROOF: If Label is empty, auto-fill it
+    // CRITICAL FIX: Ensure Label is never null before sending to API
     if (action === 'DOCUMENT_PART') {
         if (!data.photo) return alert("Select a photo first.");
+        // We set these here to ensure the API receives valid strings
         data.name = data.name || 'Visual Evidence';
+        data.serial = data.serial || 'N/A';
     }
 
     setStatusMsg(`Syncing...`);
@@ -85,10 +87,18 @@ export default function AdvancedAdminManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, bookingId: id, data, adminRole: profile?.role, adminEmail: profile?.email }),
       });
-      if (!res.ok) throw new Error('Sync Rejection');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Sync Rejection');
+
       setStatusMsg('Success!');
+      // Clear photo box after success
+      if (action === 'DOCUMENT_PART') setPartDoc({ name: '', photo: '', serial: '' });
+
       setTimeout(() => window.location.reload(), 1000);
-    } catch (err) { setStatusMsg(`Error: ${err.message}`); }
+    } catch (err) {
+      console.error("Sync Error Details:", err);
+      setStatusMsg(`ERROR: ${err.message.toUpperCase()}`);
+    }
   };
 
   const handleUpload = async (file) => {
@@ -104,7 +114,7 @@ export default function AdvancedAdminManagement() {
     finally { setIsUploading(false); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600"><Loader2 className="animate-spin" size={64} /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600 transition-colors"><Loader2 className="animate-spin" size={64} /></div>;
 
   const currentIndex = stages.indexOf(booking?.status);
   const nextStage = stages[currentIndex + 1];
@@ -117,7 +127,7 @@ export default function AdvancedAdminManagement() {
 
         {/* Navigation */}
         <div className="flex items-center justify-between">
-           <Link href="/admin" className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-indigo-600 flex items-center gap-2">
+           <Link href="/admin" className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-indigo-600 flex items-center gap-2">
              <ArrowLeft size={14} /> Dashboard
            </Link>
            <ThemeToggle />
@@ -155,7 +165,7 @@ export default function AdvancedAdminManagement() {
               )}
               {isAwaitingPayment && (
                  <div className="bg-amber-600/5 border border-amber-500/20 p-6 rounded-[1.5rem] text-center space-y-2">
-                    <Lock size={20} className="text-amber-600 mx-auto" /><p className="text-[10px] font-black text-amber-600 uppercase tracking-widest leading-relaxed">Locked: Awaiting Payment</p>
+                    <Lock size={20} className="text-amber-600 mx-auto" /><p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-relaxed">Locked: Awaiting Payment</p>
                  </div>
               )}
               {profile?.role === 'SUPER_ADMIN' && prevStage && (
@@ -189,7 +199,7 @@ export default function AdvancedAdminManagement() {
                 ) : (
                   <div className="space-y-3 mt-2">
                     {options.map((opt, i) => (
-                      <div key={i} className="grid grid-cols-12 gap-1 p-3 rounded-xl border border-black/5 bg-[#f8f8f7] dark:bg-slate-950">
+                      <div key={i} className="grid grid-cols-12 gap-1 p-3 rounded-xl border border-black/5 bg-[#f8f8f7] dark:bg-slate-950 text-[#09090b] dark:text-white">
                         <input placeholder="Option" className="col-span-4 bg-transparent text-[10px] font-bold uppercase outline-none" value={opt.option_name} onChange={e => { const n=[...options]; n[i].option_name=e.target.value; setOptions(n); }}/>
                         <input placeholder="Details" className="col-span-5 bg-transparent text-[9px] outline-none" value={opt.description} onChange={e => { const n=[...options]; n[i].description=e.target.value; setOptions(n); }}/>
                         <input placeholder="₹" className="col-span-2 bg-transparent text-[10px] font-black text-amber-600 outline-none" type="number" value={opt.price} onChange={e => { const n=[...options]; n[i].price=e.target.value; setOptions(n); }}/>
@@ -204,15 +214,15 @@ export default function AdvancedAdminManagement() {
             )}
 
             <AdminSection icon={<Camera size={16}/>} title="Evidence Log" color="purple">
-              <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-black/5 rounded-[1.5rem] cursor-pointer hover:bg-black/5 transition-all overflow-hidden relative">
-                {partDoc.photo ? <img src={partDoc.photo} className="w-full h-full object-cover"/> : <div className="text-center space-y-2 text-[#09090b] dark:text-white">
+              <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-black/5 rounded-[1.5rem] cursor-pointer hover:bg-black/5 transition-all overflow-hidden relative text-[#09090b] dark:text-white">
+                {partDoc.photo ? <img src={partDoc.photo} className="w-full h-full object-cover"/> : <div className="text-center space-y-2">
                     {isUploading ? <Loader2 className="animate-spin text-indigo-600 mx-auto" size={24} /> : <UploadCloud size={24} className="text-slate-300 mx-auto"/>}
                     <p className="text-[9px] font-black uppercase text-slate-400">Snap Photo</p>
                 </div>}
                 <input type="file" className="hidden" onChange={e => handleUpload(e.target.files[0])}/>
               </label>
 
-              <div className="grid grid-cols-2 gap-3 mt-4 text-[#09090b] dark:text-white text-white">
+              <div className="grid grid-cols-2 gap-3 mt-4 text-[#09090b] dark:text-white">
                 <input placeholder="Label (Optional)" className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 text-[10px] outline-none text-[#09090b] dark:text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
                 <input placeholder="S/N (Optional)" className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 text-[10px] outline-none text-[#09090b] dark:text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
               </div>
@@ -220,19 +230,18 @@ export default function AdvancedAdminManagement() {
               <button
                 disabled={!partDoc.photo || isUploading}
                 onClick={() => runAction('DOCUMENT_PART', partDoc)}
-                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest mt-4 disabled:opacity-30"
+                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest mt-4 disabled:opacity-30 shadow-lg shadow-indigo-600/10"
               >
                 {isUploading ? 'Uploading...' : 'Push to Log'}
               </button>
-              <p className="text-[8px] text-slate-400 uppercase text-center mt-2 font-bold tracking-widest italic">Labels are optional. Just snap & push.</p>
             </AdminSection>
           </div>
 
           {/* History */}
           <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-black/5 shadow-sm space-y-6 max-h-[600px] overflow-y-auto scrollbar-none">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-black/5 shadow-sm space-y-6 max-h-[600px] overflow-y-auto scrollbar-none text-[#09090b] dark:text-white">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2 sticky top-0 bg-white dark:bg-slate-900 pb-2 z-10"><History size={14}/> Records</h2>
-              <div className="space-y-4">
+              <div className="space-y-4 text-[#09090b] dark:text-white">
                  {existingPhotos.map((p, i) => (
                     <div key={i} className="group relative rounded-xl overflow-hidden border border-black/5 bg-slate-50">
                         <img src={p.removed_part_photo} className="w-full aspect-video object-cover"/>
@@ -241,7 +250,7 @@ export default function AdvancedAdminManagement() {
                         </div>
                     </div>
                  ))}
-                 {existingComments.map((c, i) => (<div key={i} className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5"><p className="text-[8px] font-black text-indigo-600 uppercase">{c.stage}</p><p className="text-[10px] text-[#4b5563] dark:text-slate-400 italic">"{c.comment_text}"</p></div>))}
+                 {existingComments.map((c, i) => (<div key={i} className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 text-[#09090b] dark:text-white"><p className="text-[8px] font-black text-indigo-600 uppercase">{c.stage}</p><p className="text-[10px] text-[#4b5563] dark:text-slate-400 italic">"{c.comment_text}"</p></div>))}
               </div>
             </div>
           </div>
@@ -254,7 +263,7 @@ export default function AdvancedAdminManagement() {
 
 function AdminCard({ label, value, isMono }) {
   return (
-    <div className="bg-white dark:bg-slate-900 p-4 md:p-5 rounded-[1.2rem] border border-black/5 shadow-sm">
+    <div className="bg-white dark:bg-slate-900 p-4 md:p-5 rounded-[1.2rem] border border-black/5 shadow-sm text-[#09090b] dark:text-white">
       <p className="text-[8px] text-slate-400 uppercase font-black mb-1 tracking-widest">{label}</p>
       <p className={`text-[10px] md:text-[11px] font-bold text-[#09090b] dark:text-white truncate ${isMono ? 'font-mono' : ''}`}>{value}</p>
     </div>
@@ -262,9 +271,9 @@ function AdminCard({ label, value, isMono }) {
 }
 
 function AdminSection({ icon, title, children, color = "slate" }) {
-  const colors = { slate: "text-slate-400", amber: "text-amber-500", purple: "text-indigo-600", orange: "text-orange-500", blue: "text-blue-500" };
+  const colors = { slate: "text-slate-400", amber: "text-amber-500", purple: "text-indigo-600 dark:text-indigo-400", orange: "text-orange-500", blue: "text-blue-500" };
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[1.8rem] md:rounded-[2rem] border border-black/5 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[1.8rem] md:rounded-[2rem] border border-black/5 shadow-sm space-y-4 text-[#09090b] dark:text-white">
       <h2 className={`text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${colors[color]}`}>{icon} {title}</h2>
       {children}
     </div>

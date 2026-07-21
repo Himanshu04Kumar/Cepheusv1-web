@@ -66,7 +66,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section - RESTORED from Screenshot */}
+      {/* Hero Section */}
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-40 px-6 md:px-12">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-10">
@@ -198,7 +198,7 @@ export default function HomePage() {
             </div>
 
             <FooterCol title="Operations" links={['Book a Repair', 'Track Your Repair', 'Institutional Solutions']} />
-            <FooterCol title="Ecosystem" links={['NOX Labs', 'NOX Compute']} />
+            <FooterCol title="Upcoming Plans" links={['NOX Labs', 'NOX Compute']} />
             <FooterCol title="Framework" links={['Privacy Policy', 'Terms of Service', 'Audit Guidelines']} />
             <div className="space-y-8">
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400">Connect</p>

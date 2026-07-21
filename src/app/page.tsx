@@ -19,9 +19,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#fbfbfa] dark:bg-slate-950 text-[#09090b] dark:text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-500">
 
-      {/* Drawer Menu */}
+      {/* Drawer Menu - RESTORED & FIXED */}
       <div className={`fixed inset-0 z-[100] bg-[#fbfbfa]/95 dark:bg-slate-950/95 backdrop-blur-xl transition-transform duration-700 ease-in-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="p-8 h-full flex flex-col">
+        <div className="p-6 h-full flex flex-col">
           <div className="flex justify-end">
             <button onClick={() => setMenuOpen(false)} className="p-3 bg-black/5 dark:bg-white/5 rounded-full hover:rotate-90 transition-all duration-300">
               <X size={24} className="text-[#09090b] dark:text-white" />
@@ -47,16 +47,16 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Sticky Header */}
+      {/* Sticky Header - BOOK SERVICE NOW VISIBLE ON MOBILE */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-[#fbfbfa]/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5 py-4' : 'bg-transparent py-8'}`}>
-        <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
-          {/* LOGO RESTORED: CEPHEUS without the separate dot */}
+        <div className="max-w-7xl mx-auto px-5 md:px-12 flex items-center justify-between">
           <Link href="/" className="logo text-lg font-black uppercase tracking-[0.15em] text-[#09090b] dark:text-white no-underline">
             CEPHEUS
           </Link>
-          <div className="flex items-center gap-4 md:gap-8">
+          <div className="flex items-center gap-2 md:gap-8">
             <ThemeToggle />
-            <Link href="/book" className="hidden md:flex bg-[#09090b] dark:bg-white text-white dark:text-[#09090b] px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 hover:bg-indigo-600 dark:hover:bg-indigo-400 hover:text-white transition-all shadow-xl shadow-indigo-600/10">
+            {/* REMOVED hidden md:flex -> Now visible on all devices */}
+            <Link href="/book" className="flex bg-[#09090b] dark:bg-white text-white dark:text-[#09090b] px-4 md:px-8 py-2.5 md:py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:scale-105 hover:bg-indigo-600 dark:hover:bg-indigo-400 hover:text-white transition-all shadow-xl shadow-indigo-600/10 whitespace-nowrap">
               BOOK SERVICE
             </Link>
             <button onClick={() => setMenuOpen(true)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all">
@@ -84,7 +84,6 @@ export default function HomePage() {
               A premium, full-stack laptop repair platform with radical transparency, real-time tracking, and multi-tier security.
             </p>
 
-            {/* BUTTONS RESTORED: BOOK SERVICE & ACTIVE TRACKING */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/book" className="h-16 flex items-center justify-center bg-indigo-600 text-white px-10 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-600/20 group">
                 BOOK SERVICE <ArrowRight size={16} className="ml-3 group-hover:translate-x-1 transition-transform" />

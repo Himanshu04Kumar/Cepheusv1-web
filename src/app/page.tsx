@@ -19,36 +19,60 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#fbfbfa] dark:bg-slate-950 text-[#09090b] dark:text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-500">
 
-      {/* Drawer Menu */}
+      {/* SIDE-VIEW NAVIGATION DRAWER PANELS */}
       <div className={`fixed inset-0 z-[100] bg-[#fbfbfa]/95 dark:bg-slate-950/95 backdrop-blur-xl transition-transform duration-700 ease-in-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-8 h-full flex flex-col">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="logo text-lg font-black uppercase tracking-widest text-[#09090b] dark:text-white no-underline">CEPHEUS</Link>
+          <div className="flex justify-between items-center mb-12">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400">MENU</span>
             <button onClick={() => setMenuOpen(false)} className="p-3 bg-black/5 dark:bg-white/5 rounded-full hover:rotate-90 transition-all duration-300">
               <X size={24} className="text-[#09090b] dark:text-white" />
             </button>
           </div>
-          <div className="flex-1 flex flex-col justify-center space-y-12">
-            <div className="space-y-4 text-left">
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400">Navigation</p>
-              <nav className="flex flex-col space-y-6">
-                {['BOOK SERVICE', 'ACTIVE TRACKING', 'Institutional', 'NOX Labs', 'NOX Compute'].map((item) => (
-                  <Link
-                    key={item}
-                    href={item.includes('BOOK') ? '/book' : item.includes('TRACK') ? '/track' : `/${item.toLowerCase().replace(' ', '-')}`}
-                    onClick={() => setMenuOpen(false)}
-                    className="text-4xl md:text-6xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors text-[#09090b] dark:text-white"
-                  >
-                    {item}
-                  </Link>
-                ))}
-              </nav>
+          <div className="flex-1 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Services</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/book" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Book a Repair</Link>
+                  <Link href="/track" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Track Your Repair</Link>
+                </nav>
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Partnerships</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/institutional" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Institutional Solutions</Link>
+                </nav>
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Resources</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">FAQs</Link>
+                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Warranty Policy</Link>
+                </nav>
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Coming Soon</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/nox-labs" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Labs</Link>
+                  <Link href="/nox-compute" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Compute</Link>
+                </nav>
+              </div>
+            </div>
+
+            <div className="mt-12 pt-12 border-t border-black/5 dark:border-white/5">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Fully Live Across Delhi</span>
+                </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sticky Header */}
+      {/* CLEAN NAVBAR WITH BOOK NOW & HAMBURGER PAIRED */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-[#fbfbfa]/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5 py-4' : 'bg-transparent py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           <Link href="/" className="logo text-lg font-black uppercase tracking-[0.15em] text-[#09090b] dark:text-white no-underline">
@@ -66,29 +90,30 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section - PIXEL PERFECT ALIGNMENT WITH SCREENSHOT */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-40 px-6 md:px-12">
+      {/* TWO-COLUMN HERO INTERFACE */}
+      <header className="relative pt-32 pb-20 md:pt-48 md:pb-40 px-6 md:px-12">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-          <div className="space-y-12">
+
+          {/* Left Column: Copy & Actions Hub */}
+          <div className="space-y-12 text-left">
             <div className="space-y-8">
               <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] text-[#09090b] dark:text-white">
                 Fix your device. <br />
-                Without the <br />
-                anxiety.
+                <span className="text-indigo-600">Without the <br /> anxiety.</span>
               </h1>
               <p className="text-sm md:text-base text-slate-400 dark:text-slate-500 font-medium tracking-tight">
                 Guaranteed 24-Hour Turnaround • Absolute Data Privacy • Fully Active Across Delhi
               </p>
             </div>
 
-            {/* Checkmark Grid - EXACT STYLE FROM SCREENSHOT */}
+            {/* BALANCED 6-PILLAR MATRIX */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2">
-               <FeatureCheck label="Doorstep Inspection" />
-               <FeatureCheck label="Verified Parts" />
-               <FeatureCheck label="Live Tracking Log" />
-               <FeatureCheck label="Your Data Stays Yours" />
-               <FeatureCheck label="No Fix, No Fee" />
-               <FeatureCheck label="1Y Warranty" />
+               <PillarTag label="Doorstep Inspection" />
+               <PillarTag label="Verified Parts" />
+               <PillarTag label="Live Tracking Log" />
+               <PillarTag label="Your Data Stays Yours" />
+               <PillarTag label="No Fix, No Fee" />
+               <PillarTag label="1Y Warranty" />
             </div>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -101,7 +126,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* RIGHT SIDE: Simulated Tracking Portal Graphic - CORRECTED POSITIONING */}
+          {/* Right Column: Live Tracking Portal Preview */}
           <div className="relative hidden lg:block">
             <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden p-1 px-1 scale-105">
                <div className="bg-[#f8f8f7] dark:bg-slate-950 p-6 md:p-10 rounded-[2.2rem] space-y-10 min-h-[450px]">
@@ -111,16 +136,16 @@ export default function HomePage() {
                       <div className="w-2.5 h-2.5 rounded-full bg-amber-400/50" />
                       <div className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
                     </div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">CEPHEUS-TRACKING-PORTAL</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">cepheus-tracking-portal</p>
                   </div>
 
                   <div className="space-y-12">
-                     <div className="flex justify-between items-center text-[#09090b] dark:text-white">
+                     <div className="flex justify-between items-center text-[#09090b] dark:text-white text-left">
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60">ACTIVE REPAIR:</p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">DIAGNOSTIC VIEW ||</p>
                      </div>
 
-                     <div className="space-y-8">
+                     <div className="space-y-8 text-left">
                         <div className="flex items-start gap-4">
                            <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
                            <div>
@@ -137,24 +162,25 @@ export default function HomePage() {
                         </div>
                      </div>
 
-                     <div className="pt-12 border-t border-black/5 dark:border-white/5 grid grid-cols-2 gap-4">
-                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Estimated Time:</p><p className="text-xs font-bold text-[#09090b] dark:text-white">24 Hours</p></div>
-                        <div className="text-right"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Parts Status:</p><p className="text-[10px] font-black text-orange-500 uppercase">Pending Pre-Approval</p></div>
+                     <div className="pt-12 border-t border-black/5 dark:border-white/5 grid grid-cols-2 gap-4 text-left">
+                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">ESTIMATED TIME:</p><p className="text-xs font-bold text-[#09090b] dark:text-white">24 Hours</p></div>
+                        <div className="text-right"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">PARTS STATUS:</p><p className="text-[10px] font-black text-orange-500 uppercase">PENDING PRE-APPROVAL</p></div>
                      </div>
                   </div>
                </div>
             </div>
-            {/* Status Badge - EXACT PLACEMENT */}
+
+            {/* Ecosystem Capsule */}
             <div className="absolute -bottom-8 left-0 right-0 mx-auto w-max bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4">
-               <div className="bg-indigo-600/10 text-indigo-600 px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest">NOW LIVE</div>
+               <div className="bg-indigo-600/10 text-indigo-600 px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest">Now Live</div>
                <p className="text-[10px] font-black uppercase tracking-widest text-[#09090b] dark:text-white">Computers & Laptops • <span className="opacity-40">Expanding soon</span></p>
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* How Do We Work Section */}
-      <section className="px-6 md:px-12 py-32 bg-white dark:bg-slate-900 transition-colors border-y border-black/5 dark:border-white/5">
+      {/* WORKFLOW STREAM */}
+      <main className="px-6 md:px-12 py-32 bg-white dark:bg-slate-900 transition-colors border-y border-black/5 dark:border-white/5 text-left">
         <div className="max-w-7xl mx-auto space-y-20">
           <div className="space-y-2">
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">How Do We Work?</h2>
@@ -169,27 +195,25 @@ export default function HomePage() {
             <WorkStep number="05" title="Secure Return" desc="Safe delivery with up to 1-year warranty and total data privacy." />
           </div>
         </div>
-      </section>
 
-      {/* Enterprise Banner */}
-      <section className="px-6 md:px-12 py-12 bg-white dark:bg-slate-900 border-b border-black/5 dark:border-white/5">
-        <div className="max-w-7xl mx-auto bg-[#f8f8f7] dark:bg-slate-950 p-10 md:p-12 rounded-[3rem] border border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-10">
+        {/* Institutional Inline Banner */}
+        <div className="max-w-7xl mx-auto bg-[#f8f8f7] dark:bg-slate-950 p-10 md:p-12 rounded-[3rem] border border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 mt-20">
           <div className="space-y-4 max-w-2xl text-left">
-            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">Managing devices for a school, college, or office?</h3>
+            <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">Managing devices for a school, college, or office?</h4>
             <p className="text-sm text-[#4b5563] dark:text-slate-400 leading-relaxed font-medium uppercase tracking-tight">We provide dedicated frameworks for institutional clients—featuring itemized audit trails and pre-approved pricing lists.</p>
           </div>
           <Link href="/institutional" className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#09090b] dark:text-white hover:bg-indigo-600 hover:text-white transition-all whitespace-nowrap">
             Explore Enterprise Solutions →
           </Link>
         </div>
-      </section>
+      </main>
 
-      {/* Footer */}
+      {/* FOOTER ARCHITECTURE */}
       <footer className="px-6 md:px-12 py-32 bg-white dark:bg-slate-900 transition-colors">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-12 md:gap-20">
-            <div className="col-span-2 md:col-span-1 space-y-8">
-              <Link href="/" className="logo text-xl font-black uppercase tracking-[0.15em] text-[#09090b] dark:text-white no-underline">
+            <div className="col-span-2 md:col-span-1 space-y-8 text-left">
+              <Link href="/" className="logo text-xl font-black uppercase tracking-[0.15em] text-[#09090b] dark:text-white no-underline text-left">
                 CEPHEUS
               </Link>
               <p className="text-xs font-medium text-slate-500 leading-relaxed uppercase tracking-tight">
@@ -199,7 +223,7 @@ export default function HomePage() {
             </div>
 
             <FooterCol title="Operations" links={['Book a Repair', 'Track Your Repair', 'Institutional Solutions']} />
-            <FooterCol title="Upcoming Plans" links={['NOX Labs', 'NOX Compute']} />
+            <FooterCol title="Ecosystem" links={['NOX Labs', 'NOX Compute']} />
             <FooterCol title="Framework" links={['Privacy Policy', 'Terms of Service', 'Audit Guidelines']} />
             <div className="space-y-8 text-left">
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400">Connect</p>
@@ -209,7 +233,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-32 pt-12 border-t border-black/5 dark:border-white/5">
+          <div className="mt-32 pt-12 border-t border-black/5 dark:border-white/5 text-left">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">
               © 2026 CEPHEUS. ALL RIGHTS RESERVED.
             </p>
@@ -220,10 +244,10 @@ export default function HomePage() {
   );
 }
 
-function FeatureCheck({ label }) {
+function PillarTag({ label }) {
   return (
     <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-4 py-2 rounded-xl shadow-sm text-left">
-       <Check size={14} className="text-indigo-600" />
+       <span className="text-indigo-600 font-bold">✓</span>
        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">{label}</span>
     </div>
   );
@@ -245,9 +269,9 @@ function FooterCol({ title, links }) {
   return (
     <div className="space-y-8 text-left">
       <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">{title}</p>
-      <div className="flex flex-col space-y-3">
+      <div className="flex flex-col space-y-3 text-left">
         {links.map((link) => (
-          <Link key={link} href="/" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">{link}</Link>
+          <Link key={link} href="/" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors text-left">{link}</Link>
         ))}
       </div>
     </div>

@@ -12,9 +12,7 @@ async function logActivity(bookingId, actionType, details, adminEmail) {
       target_id: bookingId,
       details: details
     });
-  } catch (e) {
-    console.error('Audit Log Error:', e);
-  }
+  } catch (e) { console.error('Log Error:', e); }
 }
 
 export async function POST(req: Request) {
@@ -22,119 +20,88 @@ export async function POST(req: Request) {
     const { action, bookingId, data, adminRole, adminEmail } = await req.json();
 
     if (action === 'UPDATE_STATUS') {
-      const { data: current } = await (supabaseAdmin as any)
-        .from('bookings')
-        .select('status')
-        .eq('id', bookingId)
-        .single();
+      const { status, deliveryWindow } = data;
 
+      // 1. STAGE REVERSAL SECURITY
+      const { data: current } = await supabaseAdmin.from('bookings').select('status').eq('id', bookingId).single();
       const stages = ['BOOKED', 'PICKED_UP', 'DIAGNOSING', 'AWAITING_APPROVAL', 'IN_REPAIR', 'QUALITY_CHECK', 'OUT_FOR_DELIVERY', 'DELIVERED'];
       const currentIndex = stages.indexOf(current.status);
-      const newIndex = stages.indexOf(data.status);
+      const targetIndex = stages.indexOf(status);
 
-      if (newIndex < currentIndex && adminRole !== 'SUPER_ADMIN') {
-        return NextResponse.json({
-          error: 'SECURITY PROTOCOL: Only Super Admin can reverse a repair stage.'
-        }, { status: 403 });
+      if (targetIndex < currentIndex && adminRole !== 'SUPER_ADMIN') {
+        return NextResponse.json({ error: 'SECURITY: Stage reversal requires Super Admin authorization.' }, { status: 403 });
       }
 
-      const updateData = { status: data.status };
-      if (data.status === 'OUT_FOR_DELIVERY' && data.deliveryWindow) {
-        updateData.pickup_slot = data.deliveryWindow;
-      }
+      // 2. EXECUTE UPDATE
+      const updateData = { status };
+      if (deliveryWindow) updateData.delivery_window = deliveryWindow;
 
-      const { error } = await (supabaseAdmin as any)
-        .from('bookings')
-        .update(updateData)
-        .eq('id', bookingId);
-
+      const { error } = await supabaseAdmin.from('bookings').update(updateData).eq('id', bookingId);
       if (error) throw error;
 
-      await logActivity(bookingId, 'STATUS_UPDATE', `Moved to ${data.status}`, adminEmail);
-      return NextResponse.json({ success: true });
-    }
-
-    if (action === 'CALLBACK_REQUEST') {
-      const { error } = await (supabaseAdmin as any).from('repair_comments').insert({
-        booking_id: bookingId,
-        stage: 'AWAITING_APPROVAL',
-        comment_text: '🚨 CUSTOMER REQUESTED A CALLBACK REGARDING REPAIR OPTIONS.'
-      });
-      if (error) throw error;
-
-      await logActivity(bookingId, 'SUPPORT_REQUEST', 'Customer requested callback', 'CUSTOMER_PORTAL');
+      await logActivity(bookingId, 'STATUS_CHANGE', `Moved to ${status}`, adminEmail);
       return NextResponse.json({ success: true });
     }
 
     if (action === 'PUBLISH_OPTIONS') {
-      await (supabaseAdmin as any).from('repair_options').delete().eq('booking_id', bookingId);
-      const { error } = await (supabaseAdmin as any)
-        .from('repair_options')
-        .insert(data.options.map(opt => ({
-          booking_id: bookingId,
-          option_name: opt.option_name,
-          description: opt.description,
-          price: parseFloat(opt.price) || 0
-        })));
+      // Clear old and insert new
+      await supabaseAdmin.from('repair_options').delete().eq('booking_id', bookingId);
+      const optionsToInsert = data.options.map(o => ({
+        booking_id: bookingId,
+        option_name: o.option_name,
+        description: o.description,
+        price: parseFloat(o.price),
+        is_selected: false
+      }));
+      await supabaseAdmin.from('repair_options').insert(optionsToInsert);
+      await supabaseAdmin.from('bookings').update({ status: 'AWAITING_APPROVAL' }).eq('id', bookingId);
 
-      if (error) throw error;
-      await (supabaseAdmin as any).from('bookings').update({ status: 'AWAITING_APPROVAL' }).eq('id', bookingId);
-
-      await logActivity(bookingId, 'PUBLISH_OPTIONS', `Generated ${data.options.length} quotes`, adminEmail);
-      return NextResponse.json({ success: true });
-    }
-
-    if (action === 'DOCUMENT_PART') {
-      const { error } = await (supabaseAdmin as any)
-        .from('part_documentation')
-        .insert({
-          booking_id: bookingId,
-          removed_part_name: data.name,
-          removed_part_photo: data.photo,
-          installed_serial: data.serial
-        });
-      if (error) throw error;
-
-      await logActivity(bookingId, 'PHOTO_UPLOAD', `Uploaded evidence: ${data.name}`, adminEmail);
+      await logActivity(bookingId, 'PUBLISH_QUOTES', `Published ${optionsToInsert.length} options`, adminEmail);
       return NextResponse.json({ success: true });
     }
 
     if (action === 'ADD_COMMENT') {
-      const { error } = await (supabaseAdmin as any)
-        .from('repair_comments')
-        .insert({
-          booking_id: bookingId,
-          stage: data.stage,
-          comment_text: data.text
-        });
+      const { error } = await supabaseAdmin.from('repair_comments').insert({
+        booking_id: bookingId,
+        stage: data.stage,
+        comment_text: data.text
+      });
       if (error) throw error;
-
-      await logActivity(bookingId, 'TECH_NOTE', `Added comment for ${data.stage}`, adminEmail);
+      await logActivity(bookingId, 'TECH_NOTE', `Added note for ${data.stage}`, adminEmail);
       return NextResponse.json({ success: true });
     }
 
-    if (action === 'ISSUE_WARRANTY') {
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + parseInt(data.days));
-
-      const { error } = await (supabaseAdmin as any)
-        .from('warranty_details')
-        .upsert({
-          booking_id: bookingId,
-          warranty_id: `W-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          period_days: parseInt(data.days),
-          expiry_date: expiryDate.toISOString().split('T')[0],
-          status: 'ACTIVE'
-        });
+    if (action === 'DOCUMENT_PART') {
+      const { error } = await supabaseAdmin.from('part_documentation').insert({
+        booking_id: bookingId,
+        removed_part_name: data.name,
+        removed_part_photo: data.photo,
+        serial_number: data.serial
+      });
       if (error) throw error;
-
-      await logActivity(bookingId, 'ISSUE_WARRANTY', `Issued ${data.days} days protection`, adminEmail);
+      await logActivity(bookingId, 'EVIDENCE_LOG', `Uploaded proof for ${data.name}`, adminEmail);
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: 'Unknown Action' }, { status: 400 });
-  } catch (error: any) {
-    console.error('Admin API Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (action === 'CALLBACK_REQUEST') {
+      await supabaseAdmin.from('repair_comments').insert({
+        booking_id: bookingId,
+        stage: 'AWAITING_APPROVAL',
+        comment_text: '🚨 CUSTOMER REQUESTED A CALLBACK REGARDING REPAIR OPTIONS.'
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'RESOLVE_CALLBACK') {
+      const { commentId } = data;
+      const { error } = await supabaseAdmin.from('repair_comments').delete().eq('id', commentId);
+      if (error) throw error;
+      await logActivity(bookingId, 'CALLBACK_RESOLVED', 'Cleared support ticket', adminEmail);
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

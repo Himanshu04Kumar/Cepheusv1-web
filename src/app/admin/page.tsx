@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check, Trash2, ChevronRight, LayoutGrid, List, History, UserCog, Activity, PhoneCall, Filter, Calendar, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, LogOut, Users, X, Shield, Key, Copy, Check, Trash2, ChevronRight, LayoutGrid, List, History, UserCog, Activity, PhoneCall, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -46,17 +46,12 @@ export default function AdminDashboard() {
 
   const fetchLogs = async () => {
     let query = supabase.from('staff_activity_logs').select('*').order('created_at', { ascending: false });
-
     if (filterType === 'EMPLOYEE' && filterValue) {
-      const lastWeek = new Date();
-      lastWeek.setDate(lastWeek.getDate() - 7);
+      const lastWeek = new Date(); lastWeek.setDate(lastWeek.getDate() - 7);
       query = query.eq('admin_email', filterValue).gte('created_at', lastWeek.toISOString());
     } else if (filterType === 'REGISTRY' && filterValue) {
       query = query.ilike('target_id', `${filterValue}%`);
-    } else {
-      query = query.limit(30);
-    }
-
+    } else { query = query.limit(30); }
     const { data } = await query;
     if (data) setActivityLogs(data);
   };
@@ -66,12 +61,26 @@ export default function AdminDashboard() {
   }, [filterType, filterValue, profile]);
 
   const fetchCallbacks = async () => {
-    const { data } = await supabase
-      .from('repair_comments')
-      .select('*, bookings(customer_name, customer_phone, device_model)')
-      .ilike('comment_text', '%CUSTOMER REQUESTED A CALLBACK%')
-      .order('created_at', { ascending: false });
+    const { data } = await supabase.from('repair_comments').select('*, bookings(customer_name, customer_phone, device_model)').ilike('comment_text', '%CUSTOMER REQUESTED A CALLBACK%').order('created_at', { ascending: false });
     if (data) setCallbackRequests(data);
+  };
+
+  const handleResolveCallback = async (e, commentId, bookingId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await fetch('/api/admin/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'RESOLVE_CALLBACK',
+          bookingId,
+          data: { commentId },
+          adminEmail: profile?.email
+        }),
+      });
+      if (res.ok) { await fetchCallbacks(); }
+    } catch (err) { alert("Error resolving callback"); }
   };
 
   const fetchBookings = async () => {
@@ -96,42 +105,24 @@ export default function AdminDashboard() {
   }, [router]);
 
   const handleResetPassword = async (userId: string, email: string) => {
-    const newPass = prompt(`Enter new password for ${email}:`);
-    if (!newPass || newPass.length < 6) return alert("Min 6 chars.");
-    try {
-      const res = await fetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'RESET_PASSWORD', userId, password: newPass }),
-      });
-      if (res.ok) alert("Success.");
-    } catch (err) { alert("Error."); }
+    const newPass = prompt(`New protocol key for ${email}:`);
+    if (!newPass || newPass.length < 6) return;
+    const res = await fetch('/api/admin/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'RESET_PASSWORD', userId, password: newPass }) });
+    if (res.ok) alert("Security Reset Successful.");
   };
 
   const handleDeleteStaff = async (userId: string, email: string) => {
-    if (!confirm(`Permanently remove ${email}?`)) return;
-    try {
-      const res = await fetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_EMPLOYEE', userId }),
-      });
-      if (res.ok) { alert("Staff Removed."); await fetchStaff(); }
-    } catch (err) { alert("Error."); }
+    if (!confirm(`Revoke access for ${email}?`)) return;
+    const res = await fetch('/api/admin/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'DELETE_EMPLOYEE', userId }) });
+    if (res.ok) { alert("Access Revoked."); await fetchStaff(); }
   };
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreatingStaff(true);
-    try {
-      const res = await fetch('/api/admin/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'CREATE_EMPLOYEE', email: staffEmail, password: staffPass }),
-      });
-      if (res.ok) { alert('Agent Deployed!'); await fetchStaff(); setStaffEmail(''); setStaffPass(''); }
-    } catch (err) { alert(err.message); }
-    finally { setCreatingStaff(false); }
+    const res = await fetch('/api/admin/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'CREATE_EMPLOYEE', email: staffEmail, password: staffPass }) });
+    if (res.ok) { alert('Agent Deployed!'); await fetchStaff(); setStaffEmail(''); setStaffPass(''); }
+    setCreatingStaff(false);
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login'); };
@@ -152,26 +143,26 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center border-b border-black/5 dark:border-white/5 pb-6">
               <div className="flex items-center gap-3">
                  <Shield className="text-indigo-600" size={32} />
-                 <div><h2 className="text-2xl font-black uppercase tracking-tighter">Oversight Command</h2><p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-[#6b6c76]">Intelligent Audit & Control</p></div>
+                 <div><h2 className="text-2xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">Oversight Command</h2><p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-[#6b6c76]">Intelligent Personnel Audit</p></div>
               </div>
               <button onClick={() => setShowStaffModal(false)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full text-slate-500">&times;</button>
             </div>
 
             <div className="grid lg:grid-cols-4 gap-10">
                <div className="space-y-6">
-                  <h3 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2">Deploy Agent</h3>
+                  <h3 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2"><Plus size={14}/> Deploy Agent</h3>
                   <form onSubmit={handleCreateStaff} className="space-y-4 bg-[#f8f8f7] dark:bg-slate-950 p-6 rounded-3xl border border-black/5 dark:border-white/5">
-                    <input required type="email" placeholder="Email" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl outline-none text-xs text-[#09090b] dark:text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
+                    <input required type="email" placeholder="Email" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 rounded-xl outline-none text-xs text-[#09090b] dark:text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
                     <input required type="text" placeholder="Key" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl outline-none text-xs font-mono text-[#09090b] dark:text-white" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
                     <button disabled={creatingStaff} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold uppercase text-[10px] hover:bg-indigo-700 shadow-xl shadow-indigo-600/10">Deploy Agent</button>
                   </form>
                </div>
 
-               <div className="space-y-6 text-[#09090b] dark:text-white">
+               <div className="space-y-6">
                   <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Directory</h3>
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
                     {staffList.map((s) => (
-                      <div key={s.id} className="bg-white dark:bg-slate-950 p-4 rounded-2xl border border-black/5 dark:border-white/10 flex items-center justify-between group">
+                      <div key={s.id} className="bg-white dark:bg-slate-950 p-4 rounded-2xl border border-black/5 dark:border-white/10 flex items-center justify-between group text-[#09090b] dark:text-white">
                         <div className="flex items-center gap-3 truncate">
                           <div className="w-10 h-10 rounded-full bg-[#f8f8f7] dark:bg-slate-900 border border-black/5 dark:border-white/5 flex items-center justify-center text-xs font-black text-slate-500">{s.email.substring(0,1).toUpperCase()}</div>
                           <div className="max-w-[120px]"><p className="text-[11px] font-bold truncate text-[#09090b] dark:text-slate-300">{s.email}</p><p className="text-[8px] font-black uppercase text-slate-500">{s.role}</p></div>
@@ -227,7 +218,7 @@ export default function AdminDashboard() {
               <History size={18} />
             </button>
           )}
-          <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-red-500 transition-all text-[#4b5563] dark:text-slate-400"><LogOut size={18} /></button>
+          <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-red-500 transition-all"><LogOut size={18} /></button>
         </div>
       </header>
 
@@ -241,19 +232,26 @@ export default function AdminDashboard() {
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {callbackRequests.map((req) => (
-                  <Link key={req.id} href={`/admin/job/${req.booking_id}`}>
-                    <div className="bg-white dark:bg-slate-900 border border-red-500/20 p-6 rounded-[2.5rem] hover:shadow-2xl hover:border-red-500 transition-all group relative overflow-hidden shadow-sm">
+                  <div key={req.id} className="bg-white dark:bg-slate-900 border border-red-500/20 p-6 rounded-[2.5rem] hover:shadow-2xl transition-all group relative overflow-hidden shadow-sm">
                        <div className="flex justify-between items-start mb-6">
                           <div className="p-3 bg-red-500/10 rounded-2xl text-red-600"><PhoneCall size={22}/></div>
                           <span className="text-[9px] font-black text-red-500/50 uppercase tracking-widest text-slate-500">{new Date(req.created_at).toLocaleTimeString()}</span>
                        </div>
                        <h4 className="text-xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">{req.bookings.customer_name}</h4>
                        <div className="mt-8 pt-4 border-t border-black/5 dark:border-white/5 flex justify-between items-center">
-                          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{req.bookings.customer_phone}</span>
-                          <ChevronRight size={18} className="text-red-500 group-hover:translate-x-1 transition-transform"/>
+                          <div className="flex flex-col">
+                             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{req.bookings.customer_phone}</span>
+                             <Link href={`/admin/job/${req.booking_id}`} className="text-[8px] font-black text-indigo-600 hover:underline uppercase mt-1">Open Unit</Link>
+                          </div>
+                          <button
+                            onClick={(e) => handleResolveCallback(e, req.id, req.booking_id)}
+                            className="bg-emerald-600 text-white p-3 rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2 group/btn"
+                          >
+                             <CheckCircle size={16} />
+                             <span className="text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/btn:opacity-100 max-w-0 group-hover/btn:max-w-[100px] transition-all overflow-hidden whitespace-nowrap">Mark Resolved</span>
+                          </button>
                        </div>
                     </div>
-                  </Link>
                 ))}
              </div>
           </div>
@@ -312,7 +310,7 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      <footer className="p-12 text-center border-t border-black/5 dark:border-white/5 text-white">
+      <footer className="p-12 text-center border-t border-black/5 dark:border-white/5">
          <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400 italic">Cepheus Technology Protocol · Verified security link active</p>
       </footer>
     </div>

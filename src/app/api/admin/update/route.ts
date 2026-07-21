@@ -71,12 +71,11 @@ export async function POST(req: Request) {
     }
 
     if (action === 'DOCUMENT_PART') {
-      // FIX: Ensure labels are optional and map to correct DB columns
+      // SCHEMA FIX: Removing 'serial_number' as it's missing from the DB schema cache
       const { error } = await supabaseAdmin.from('part_documentation').insert({
         booking_id: bookingId,
         removed_part_name: data.name || 'Visual Evidence',
-        removed_part_photo: data.photo,
-        serial_number: data.serial || 'N/A'
+        removed_part_photo: data.photo
       });
       if (error) throw error;
       await logActivity(bookingId, 'EVIDENCE_LOG', `Uploaded proof for ${data.name || 'Unlabeled Part'}`, adminEmail);

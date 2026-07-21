@@ -58,12 +58,10 @@ export default function AdvancedAdminManagement() {
           .single();
 
         // 3. FIX: Only redirect if there's a TRUE error fetching the profile (like no access)
-        // If profile exists, set it and continue.
         if (prof) {
             setProfile(prof);
         } else {
             console.warn("Profile not found for session, continuing as restricted.");
-            // We set a fallback profile to allow viewing but prevent actions
             setProfile({ role: 'EMPLOYEE', email: session.user.email });
         }
 
@@ -103,7 +101,7 @@ export default function AdvancedAdminManagement() {
   }, [id, router]);
 
   const runAction = async (action, data) => {
-    setStatusMsg(`Syncing...`);
+    setStatusMsg(`Syncing: ${action}...`);
     try {
       const res = await fetch('/api/admin/update', {
         method: 'POST',
@@ -147,10 +145,10 @@ export default function AdvancedAdminManagement() {
   const removeOption = (index) => setOptions(options.filter((_, i) => i !== index));
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600">
+    <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600 transition-colors">
       <div className="flex flex-col items-center gap-6">
         <Loader2 className="animate-spin" size={64} />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Accessing Registry Terminal...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] animate-pulse text-indigo-600">Accessing Registry Terminal...</p>
       </div>
     </div>
   );
@@ -171,31 +169,31 @@ export default function AdvancedAdminManagement() {
            <ThemeToggle />
         </div>
 
-        <div className="flex justify-between items-end border-b border-black/5 dark:border-white/5 pb-8">
+        <div className="flex justify-between items-end border-b border-black/5 dark:border-white/5 pb-8 text-[#09090b] dark:text-white">
           <div>
             <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] mb-1">Command Unit</p>
             <h1 className="text-4xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">{booking?.customer_name}</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-[#09090b] dark:text-white">
              <div className="bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-black/5 dark:border-white/10 text-[10px] font-black uppercase text-slate-500 flex items-center gap-2">
-               {profile?.role === 'SUPER_ADMIN' ? <Unlock size={12} className="text-emerald-500"/> : <Lock size={12} className="text-amber-500"/>}
-               <span className={profile?.role === 'SUPER_ADMIN' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>{profile?.role}</span>
+               {profile?.role === 'SUPER_ADMIN' ? <Unlock size={12} className="text-green-500"/> : <Lock size={12} className="text-amber-500"/>}
+               <span className={profile?.role === 'SUPER_ADMIN' ? 'text-green-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>{profile?.role}</span>
              </div>
              <div className="bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-black/5 dark:border-white/10 text-[10px] font-black uppercase text-slate-500">Status: <span className="text-indigo-600 dark:text-indigo-400">{booking?.status.replace(/_/g, ' ')}</span></div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[#09090b] dark:text-white">
            <Card label="Hardware" value={`${booking?.device_brand} ${booking?.device_model}`} />
            <Card label="Mobile" value={booking?.customer_phone} />
            <Card label="Logged On" value={new Date(booking?.created_at).toLocaleDateString('en-IN')} />
            <Card label="Registry ID" value={id.slice(0,8)} isMono />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 text-[#09090b] dark:text-white">
+          <div className="space-y-6 text-[#09090b] dark:text-white">
             <Section icon={<RefreshCw size={14}/>} title="Operational Protocol">
-              <div className="space-y-4 pt-2">
+              <div className="space-y-4 pt-2 text-[#09090b] dark:text-white">
                 {nextStage && !isAwaitingPayment && (
                   <button onClick={() => runAction('UPDATE_STATUS', { status: nextStage })} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[2rem] font-bold uppercase text-[11px] tracking-widest transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3">Proceed to {nextStage.replace(/_/g, ' ')} <ChevronRight size={16}/></button>
                 )}
@@ -211,7 +209,7 @@ export default function AdvancedAdminManagement() {
             </Section>
             {['QUALITY_CHECK', 'OUT_FOR_DELIVERY'].includes(booking?.status) && (
               <Section icon={<Truck size={14}/>} title="Dispatch Hub" color="orange">
-                <div className="space-y-3 pt-2">
+                <div className="space-y-3 pt-2 text-[#09090b] dark:text-white">
                    <input placeholder="Est. Window" className="w-full bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 dark:border-white/10 text-xs text-[#09090b] dark:text-white outline-none" value={deliveryWindow} onChange={e => setDeliveryWindow(e.target.value)} />
                    <button onClick={() => runAction('UPDATE_STATUS', { status: 'OUT_FOR_DELIVERY', deliveryWindow })} className="w-full p-3 text-[10px] font-black rounded-xl border border-black/5 dark:border-white/10 text-orange-600 uppercase hover:bg-orange-50 dark:hover:bg-orange-500/5 transition-all">Out For Delivery</button>
                    <button onClick={() => runAction('UPDATE_STATUS', { status: 'DELIVERED' })} className="w-full p-3 text-[10px] font-black rounded-xl border border-black/5 dark:border-white/10 text-emerald-600 uppercase hover:bg-emerald-50 dark:hover:bg-emerald-500/5 transition-all">Mark Delivered</button>
@@ -219,29 +217,29 @@ export default function AdvancedAdminManagement() {
               </Section>
             )}
             <Section icon={<MessageSquare size={14}/>} title="Tech Log" color="blue">
-              <div className="space-y-3 pt-2">
-                <select className="w-full bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 dark:border-white/10 text-[10px] font-bold text-slate-500 dark:text-slate-400 outline-none" value={noteStage} onChange={e => setNoteStage(e.target.value)}>{stages.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}</select>
+              <div className="space-y-3 pt-2 text-[#09090b] dark:text-white text-white">
+                <select className="w-full bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 dark:border-white/10 text-[10px] font-bold text-slate-500 dark:text-slate-400 outline-none text-[#09090b] dark:text-white" value={noteStage} onChange={e => setNoteStage(e.target.value)}>{stages.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}</select>
                 <textarea placeholder="Finding..." className="w-full bg-[#f8f8f7] dark:bg-slate-950 p-4 rounded-xl border border-black/5 dark:border-white/10 text-xs h-20 outline-none text-[#09090b] dark:text-white" value={techNote} onChange={e => setTechNote(e.target.value)} />
                 <button disabled={!techNote} onClick={() => runAction('ADD_COMMENT', { stage: noteStage, text: techNote })} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-30">Push Note</button>
               </div>
             </Section>
           </div>
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-8 text-[#09090b] dark:text-white text-white">
             {['DIAGNOSING', 'AWAITING_APPROVAL'].includes(booking?.status) && (
               <Section icon={<AlertCircle size={16}/>} title="Transparency Gate" color="amber">
                 {selectedOption ? (
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-3xl flex justify-between items-center text-emerald-600 dark:text-emerald-400 mt-4">
+                  <div className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-3xl flex justify-between items-center text-emerald-600 dark:text-emerald-400 mt-4 animate-in zoom-in duration-500">
                     <div><p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-60">Verified Selection</p><p className="text-lg font-black uppercase">{selectedOption.option_name}</p></div>
-                    <div className="text-right"><p className="text-2xl font-black font-mono text-[#09090b] dark:text-white">₹{selectedOption.price}</p><div className="flex items-center gap-1 text-[10px] font-black uppercase mt-1"><CheckCircle2 size={12}/> Success</div></div>
+                    <div className="text-right text-[#09090b] dark:text-white"><p className="text-2xl font-black font-mono text-[#09090b] dark:text-white">₹{selectedOption.price}</p><div className="flex items-center gap-1 text-[10px] font-black uppercase mt-1"><CheckCircle2 size={12}/> Success</div></div>
                   </div>
                 ) : (
-                  <div className="space-y-4 pt-4">
+                  <div className="space-y-4 pt-4 text-[#09090b] dark:text-white">
                     {options.map((opt, i) => (
-                      <div key={i} className="grid grid-cols-12 gap-1 p-4 rounded-2xl border border-black/5 dark:border-white/10 bg-[#f8f8f7] dark:bg-slate-950">
-                        <div className="col-span-4 border-r border-black/5 dark:border-white/10 pr-2"><input placeholder="Option" className="w-full bg-transparent text-xs font-bold uppercase outline-none text-[#09090b] dark:text-white" value={opt.option_name} onChange={e => updateOption(i, 'option_name', e.target.value)}/></div>
-                        <div className="col-span-5 border-r border-black/5 dark:border-white/10 px-2"><input placeholder="Details" className="w-full bg-transparent text-[10px] outline-none text-slate-500 dark:text-slate-400" value={opt.description} onChange={e => updateOption(i, 'description', e.target.value)}/></div>
-                        <div className="col-span-2 px-2"><input placeholder="₹" className="w-full bg-transparent text-xs font-black text-amber-600 outline-none" type="number" value={opt.price} onChange={e => updateOption(i, 'price', e.target.value)}/></div>
-                        <div className="col-span-1 flex justify-end"><button onClick={() => removeOption(i)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={14}/></button></div>
+                      <div key={i} className="grid grid-cols-12 gap-1 p-4 rounded-2xl border border-black/5 dark:border-white/10 bg-[#f8f8f7] dark:bg-slate-950 text-[#09090b] dark:text-white">
+                        <div className="col-span-4 border-r border-black/5 dark:border-white/10 pr-2 text-[#09090b] dark:text-white"><input placeholder="Option" className="w-full bg-transparent text-xs font-bold uppercase outline-none text-[#09090b] dark:text-white" value={opt.option_name} onChange={e => updateOption(i, 'option_name', e.target.value)}/></div>
+                        <div className="col-span-5 border-r border-black/5 dark:border-white/10 px-2 text-[#09090b] dark:text-white"><input placeholder="Details" className="w-full bg-transparent text-[10px] outline-none text-slate-500 dark:text-slate-400" value={opt.description} onChange={e => updateOption(i, 'description', e.target.value)}/></div>
+                        <div className="col-span-2 px-2 text-[#09090b] dark:text-white"><input placeholder="₹" className="w-full bg-transparent text-xs font-black text-amber-600 outline-none" type="number" value={opt.price} onChange={e => updateOption(i, 'price', e.target.value)}/></div>
+                        <div className="col-span-1 flex justify-end text-[#09090b] dark:text-white"><button onClick={() => removeOption(i)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={14}/></button></div>
                       </div>
                     ))}
                     <button onClick={addOption} className="w-full py-4 border-2 border-dashed border-black/5 dark:border-white/10 rounded-3xl text-[10px] font-black uppercase text-slate-400 hover:text-indigo-600 hover:border-indigo-600/30 transition-all flex items-center justify-center gap-2"><Plus size={14}/> Add Another Path</button>
@@ -251,12 +249,12 @@ export default function AdvancedAdminManagement() {
               </Section>
             )}
             <Section icon={<Camera size={16}/>} title="Evidence Log" color="purple">
-              <div className="space-y-6 pt-4">
+              <div className="space-y-6 pt-4 text-[#09090b] dark:text-white">
                 <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-black/5 dark:border-white/10 rounded-[2rem] cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all overflow-hidden relative">
                   {partDoc.photo ? <img src={partDoc.photo} className="w-full h-full object-cover"/> : <div className="text-center space-y-2"><UploadCloud size={32} className="text-slate-300 mx-auto"/><p className="text-[10px] font-black uppercase text-slate-400">Click to snap photo</p></div>}
                   <input type="file" className="hidden" onChange={e => handleUpload(e.target.files[0])}/>
                 </label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 text-[#09090b] dark:text-white">
                   <input placeholder="Label" className="bg-[#f8f8f7] dark:bg-slate-950 p-4 rounded-xl border border-black/5 dark:border-white/10 text-xs font-bold outline-none focus:border-indigo-500 text-[#09090b] dark:text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
                   <input placeholder="S/N" className="bg-[#f8f8f7] dark:bg-slate-950 p-4 rounded-xl border border-black/5 dark:border-white/10 text-xs font-bold outline-none focus:border-indigo-500 text-[#09090b] dark:text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
                 </div>
@@ -264,10 +262,10 @@ export default function AdvancedAdminManagement() {
               </div>
             </Section>
           </div>
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-black/5 dark:border-white/10 shadow-sm space-y-8 h-full max-h-[900px] overflow-y-auto scrollbar-none">
+          <div className="space-y-6 text-[#09090b] dark:text-white text-white">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-black/5 dark:border-white/10 shadow-sm space-y-8 h-full max-h-[900px] overflow-y-auto scrollbar-none text-[#09090b] dark:text-white">
               <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-2 sticky top-0 bg-white dark:bg-slate-900 pb-2 z-10"><History size={14}/> Records</h2>
-              <div className="space-y-4">
+              <div className="space-y-4 text-[#09090b] dark:text-white">
                  {existingPhotos.map((p, i) => (<div key={i} className="group relative aspect-video rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 bg-slate-100 dark:bg-slate-950"><img src={p.removed_part_photo} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all"/><p className="absolute bottom-3 left-3 text-[8px] font-black uppercase bg-white/90 dark:bg-black/90 px-2 py-1 rounded text-[#09090b] dark:text-white">{p.removed_part_name}</p></div>))}
                  {existingComments.map((c, i) => (<div key={i} className="bg-[#f8f8f7] dark:bg-slate-950 p-4 rounded-2xl border border-black/5 dark:border-white/10"><p className="text-[8px] font-black text-indigo-600 uppercase mb-1">{c.stage.replace(/_/g, ' ')}</p><p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium italic leading-relaxed">"{c.comment_text}"</p></div>))}
               </div>
@@ -282,7 +280,7 @@ export default function AdvancedAdminManagement() {
 
 function Card({ label, value, isMono }) {
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-[1.5rem] border border-black/5 dark:border-white/10 shadow-sm">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-[1.5rem] border border-black/5 dark:border-white/10 shadow-sm text-[#09090b] dark:text-white">
       <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-black mb-1 tracking-widest">{label}</p>
       <p className={`text-xs font-bold text-[#09090b] dark:text-white ${isMono ? 'font-mono' : ''}`}>{value}</p>
     </div>
@@ -292,7 +290,7 @@ function Card({ label, value, isMono }) {
 function Section({ icon, title, children, color = "slate" }) {
   const colors = { slate: "text-slate-400", amber: "text-amber-500", purple: "text-indigo-600 dark:text-indigo-400", orange: "text-orange-500", blue: "text-blue-500" };
   return (
-    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-black/5 dark:border-white/10 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-black/5 dark:border-white/10 shadow-sm space-y-4 text-[#09090b] dark:text-white">
       <h2 className={`text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${colors[color]}`}>{icon} {title}</h2>
       {children}
     </div>

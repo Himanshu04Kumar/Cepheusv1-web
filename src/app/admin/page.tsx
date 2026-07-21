@@ -47,27 +47,28 @@ export default function AdminDashboard() {
   const fetchLogs = async () => {
     try {
       console.log("Fetching logs...");
+      // FORCE FETCH: Removing all filters temporarily to see if data exists
       let query = supabase.from('staff_activity_logs').select('*').order('created_at', { ascending: false });
 
       if (filterType === 'EMPLOYEE' && filterValue) {
-        const lastWeek = new Date(); lastWeek.setDate(lastWeek.getDate() - 7);
-        query = query.eq('admin_email', filterValue).gte('created_at', lastWeek.toISOString());
+        query = query.eq('admin_email', filterValue);
       } else if (filterType === 'REGISTRY' && filterValue) {
         query = query.ilike('target_id', `${filterValue}%`);
       } else {
-        query = query.limit(50);
+        query = query.limit(100); // Increased limit to find older logs
       }
 
       const { data, error } = await query;
       if (error) {
-        console.error("Log Fetch Error:", error);
+        console.error("LOG RETRIEVAL REJECTED:", error.message);
+        // This likely means RLS (Row Level Security) is blocking the read on Supabase.
       }
       if (data) {
-        console.log("Logs retrieved:", data.length);
+        console.log("Registry Synced:", data.length, "entries found.");
         setActivityLogs(data);
       }
     } catch (e) {
-      console.error("Log Fetch Exception:", e);
+      console.error("Registry Exception:", e);
     }
   };
 
@@ -97,7 +98,7 @@ export default function AdminDashboard() {
           adminEmail: profile?.email
         }),
       });
-      if (res.ok) { await fetchCallbacks(); }
+      if (res.ok) { await fetchCallbacks(); await fetchLogs(); }
     } catch (err) { alert("Error resolving callback"); }
   };
 
@@ -170,17 +171,17 @@ export default function AdminDashboard() {
                <div className="space-y-6">
                   <h3 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2"><Plus size={14}/> Deploy Agent</h3>
                   <form onSubmit={handleCreateStaff} className="space-y-4 bg-[#f8f8f7] dark:bg-slate-950 p-6 rounded-3xl border border-black/5 dark:border-white/5">
-                    <input required type="email" placeholder="Email" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl outline-none text-xs text-[#09090b] dark:text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
+                    <input required type="email" placeholder="Email" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 rounded-xl outline-none text-xs text-[#09090b] dark:text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
                     <input required type="text" placeholder="Key" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl outline-none text-xs font-mono text-[#09090b] dark:text-white" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
                     <button disabled={creatingStaff} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold uppercase text-[10px] hover:bg-indigo-700 shadow-xl shadow-indigo-600/10">Deploy Agent</button>
                   </form>
                </div>
 
-               <div className="space-y-6">
+               <div className="space-y-6 text-[#09090b] dark:text-white">
                   <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Directory</h3>
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
                     {staffList.map((s) => (
-                      <div key={s.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-black/5 dark:border-white/10 flex items-center justify-between group text-[#09090b] dark:text-white">
+                      <div key={s.id} className="bg-white dark:bg-slate-950 p-4 rounded-2xl border border-black/5 dark:border-white/10 flex items-center justify-between group">
                         <div className="flex items-center gap-3 truncate">
                           <div className="w-10 h-10 rounded-full bg-[#f8f8f7] dark:bg-slate-900 border border-black/5 dark:border-white/5 flex items-center justify-center text-xs font-black text-slate-500">{s.email.substring(0,1).toUpperCase()}</div>
                           <div className="max-w-[120px]"><p className="text-[11px] font-bold truncate text-[#09090b] dark:text-slate-300">{s.email}</p><p className="text-[8px] font-black uppercase text-slate-500">{s.role}</p></div>
@@ -205,9 +206,12 @@ export default function AdminDashboard() {
                   </div>
                   <div className="bg-[#f8f8f7] dark:bg-slate-950 p-6 rounded-[2.5rem] border border-black/5 dark:border-white/5 max-h-[500px] overflow-y-auto scrollbar-thin">
                     {activityLogs.length === 0 ? (
-                      <div className="h-40 flex flex-col items-center justify-center text-slate-400 space-y-2 opacity-50">
-                        <Activity size={24} />
-                        <p className="text-[10px] font-black uppercase tracking-widest">Registry Empty</p>
+                      <div className="h-40 flex flex-col items-center justify-center text-slate-400 space-y-4 opacity-50">
+                        <Activity size={32} className="animate-pulse" />
+                        <div className="text-center">
+                           <p className="text-[10px] font-black uppercase tracking-[0.3em]">Registry Empty</p>
+                           <p className="text-[8px] font-bold uppercase tracking-widest mt-1">Checking Remote Infrastructure...</p>
+                        </div>
                       </div>
                     ) : (
                       activityLogs.map((log) => (
@@ -217,8 +221,9 @@ export default function AdminDashboard() {
                                <p className="text-[11px] font-black text-indigo-600 uppercase">{log.admin_email}</p>
                                <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(log.created_at).toLocaleTimeString()}</span>
                              </div>
-                             <p className="text-[13px] font-medium text-[#4b5563] dark:text-slate-300 mt-1">
+                             <p className="text-[13px] font-medium text-[#4b5563] dark:text-slate-300 mt-1 leading-relaxed">
                                <span className="text-[#09090b] dark:text-white font-black uppercase">{log.action_type?.replace(/_/g, ' ')}</span> on unit <span className="text-indigo-600 font-mono">#{log.target_id?.slice(0,8)}</span>
+                               {log.details && <span className="block text-[10px] text-slate-400 mt-1 font-bold italic">{log.details}</span>}
                              </p>
                            </div>
                         </div>

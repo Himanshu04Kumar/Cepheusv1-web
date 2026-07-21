@@ -45,20 +45,38 @@ export default function AdminDashboard() {
   };
 
   const fetchLogs = async () => {
-    let query = supabase.from('staff_activity_logs').select('*').order('created_at', { ascending: false });
-    if (filterType === 'EMPLOYEE' && filterValue) {
-      const lastWeek = new Date(); lastWeek.setDate(lastWeek.getDate() - 7);
-      query = query.eq('admin_email', filterValue).gte('created_at', lastWeek.toISOString());
-    } else if (filterType === 'REGISTRY' && filterValue) {
-      query = query.ilike('target_id', `${filterValue}%`);
-    } else { query = query.limit(30); }
-    const { data } = await query;
-    if (data) setActivityLogs(data);
+    try {
+      console.log("Fetching logs...");
+      let query = supabase.from('staff_activity_logs').select('*').order('created_at', { ascending: false });
+
+      if (filterType === 'EMPLOYEE' && filterValue) {
+        const lastWeek = new Date(); lastWeek.setDate(lastWeek.getDate() - 7);
+        query = query.eq('admin_email', filterValue).gte('created_at', lastWeek.toISOString());
+      } else if (filterType === 'REGISTRY' && filterValue) {
+        query = query.ilike('target_id', `${filterValue}%`);
+      } else {
+        query = query.limit(50);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("Log Fetch Error:", error);
+      }
+      if (data) {
+        console.log("Logs retrieved:", data.length);
+        setActivityLogs(data);
+      }
+    } catch (e) {
+      console.error("Log Fetch Exception:", e);
+    }
   };
 
+  // FETCH LOGS when modal opens or profile loads
   useEffect(() => {
-    if (profile?.role === 'SUPER_ADMIN') fetchLogs();
-  }, [filterType, filterValue, profile]);
+    if (showStaffModal && profile?.role === 'SUPER_ADMIN') {
+      fetchLogs();
+    }
+  }, [showStaffModal, profile, filterType, filterValue]);
 
   const fetchCallbacks = async () => {
     const { data } = await supabase.from('repair_comments').select('*, bookings(customer_name, customer_phone, device_model)').ilike('comment_text', '%CUSTOMER REQUESTED A CALLBACK%').order('created_at', { ascending: false });
@@ -96,7 +114,7 @@ export default function AdminDashboard() {
       if (!prof) { router.push('/login'); return; }
       setProfile(prof);
       await Promise.all([fetchBookings(), fetchCallbacks()]);
-      if (prof?.role === 'SUPER_ADMIN') { await fetchStaff(); await fetchLogs(); }
+      if (prof?.role === 'SUPER_ADMIN') { await fetchStaff(); }
       setLoading(false);
     }
     init();
@@ -143,7 +161,7 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center border-b border-black/5 dark:border-white/5 pb-6">
               <div className="flex items-center gap-3">
                  <Shield className="text-indigo-600" size={32} />
-                 <div><h2 className="text-2xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">Oversight Command</h2><p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-[#6b6c76]">Intelligent Personnel Audit</p></div>
+                 <div><h2 className="text-2xl font-black uppercase tracking-tighter">Oversight Command</h2><p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-[#6b6c76]">Intelligent Personnel Audit</p></div>
               </div>
               <button onClick={() => setShowStaffModal(false)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full text-slate-500">&times;</button>
             </div>
@@ -152,7 +170,7 @@ export default function AdminDashboard() {
                <div className="space-y-6">
                   <h3 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2"><Plus size={14}/> Deploy Agent</h3>
                   <form onSubmit={handleCreateStaff} className="space-y-4 bg-[#f8f8f7] dark:bg-slate-950 p-6 rounded-3xl border border-black/5 dark:border-white/5">
-                    <input required type="email" placeholder="Email" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 rounded-xl outline-none text-xs text-[#09090b] dark:text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
+                    <input required type="email" placeholder="Email" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl outline-none text-xs text-[#09090b] dark:text-white" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} />
                     <input required type="text" placeholder="Key" className="w-full p-4 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl outline-none text-xs font-mono text-[#09090b] dark:text-white" value={staffPass} onChange={e => setStaffPass(e.target.value)} />
                     <button disabled={creatingStaff} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold uppercase text-[10px] hover:bg-indigo-700 shadow-xl shadow-indigo-600/10">Deploy Agent</button>
                   </form>
@@ -162,7 +180,7 @@ export default function AdminDashboard() {
                   <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Directory</h3>
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
                     {staffList.map((s) => (
-                      <div key={s.id} className="bg-white dark:bg-slate-950 p-4 rounded-2xl border border-black/5 dark:border-white/10 flex items-center justify-between group text-[#09090b] dark:text-white">
+                      <div key={s.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-black/5 dark:border-white/10 flex items-center justify-between group text-[#09090b] dark:text-white">
                         <div className="flex items-center gap-3 truncate">
                           <div className="w-10 h-10 rounded-full bg-[#f8f8f7] dark:bg-slate-900 border border-black/5 dark:border-white/5 flex items-center justify-center text-xs font-black text-slate-500">{s.email.substring(0,1).toUpperCase()}</div>
                           <div className="max-w-[120px]"><p className="text-[11px] font-bold truncate text-[#09090b] dark:text-slate-300">{s.email}</p><p className="text-[8px] font-black uppercase text-slate-500">{s.role}</p></div>
@@ -181,9 +199,18 @@ export default function AdminDashboard() {
                </div>
 
                <div className="lg:col-span-2 space-y-6">
-                  <h3 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Live Audit Trail</h3>
-                  <div className="bg-[#f8f8f7] dark:bg-slate-950 p-6 rounded-[2.5rem] border border-black/5 dark:border-white/10 max-h-[500px] overflow-y-auto scrollbar-thin">
-                    {activityLogs.map((log) => (
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Live Audit Trail</h3>
+                    <button onClick={fetchLogs} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><History size={14}/></button>
+                  </div>
+                  <div className="bg-[#f8f8f7] dark:bg-slate-950 p-6 rounded-[2.5rem] border border-black/5 dark:border-white/5 max-h-[500px] overflow-y-auto scrollbar-thin">
+                    {activityLogs.length === 0 ? (
+                      <div className="h-40 flex flex-col items-center justify-center text-slate-400 space-y-2 opacity-50">
+                        <Activity size={24} />
+                        <p className="text-[10px] font-black uppercase tracking-widest">Registry Empty</p>
+                      </div>
+                    ) : (
+                      activityLogs.map((log) => (
                         <div key={log.id} className="flex gap-5 items-start border-l-2 border-black/5 dark:border-white/10 pl-8 pb-6 relative before:absolute before:left-[-5px] before:top-1.5 before:w-2 before:h-2 before:bg-indigo-600 before:rounded-full">
                            <div className="flex-1">
                              <div className="flex justify-between items-center text-[#09090b] dark:text-white">
@@ -191,11 +218,12 @@ export default function AdminDashboard() {
                                <span className="text-[9px] font-bold text-slate-400 uppercase">{new Date(log.created_at).toLocaleTimeString()}</span>
                              </div>
                              <p className="text-[13px] font-medium text-[#4b5563] dark:text-slate-300 mt-1">
-                               <span className="text-[#09090b] dark:text-white font-black uppercase">{log.action_type.replace(/_/g, ' ')}</span> on unit <span className="text-indigo-600 font-mono">#{log.target_id.slice(0,8)}</span>
+                               <span className="text-[#09090b] dark:text-white font-black uppercase">{log.action_type?.replace(/_/g, ' ')}</span> on unit <span className="text-indigo-600 font-mono">#{log.target_id?.slice(0,8)}</span>
                              </p>
                            </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </div>
                </div>
             </div>
@@ -218,7 +246,7 @@ export default function AdminDashboard() {
               <History size={18} />
             </button>
           )}
-          <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-red-500 transition-all"><LogOut size={18} /></button>
+          <button onClick={handleLogout} className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-red-500 transition-all text-[#4b5563] dark:text-slate-400"><LogOut size={18} /></button>
         </div>
       </header>
 
@@ -310,7 +338,7 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      <footer className="p-12 text-center border-t border-black/5 dark:border-white/5">
+      <footer className="p-12 text-center border-t border-black/5 dark:border-white/5 text-white">
          <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400 italic">Cepheus Technology Protocol · Verified security link active</p>
       </footer>
     </div>

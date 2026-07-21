@@ -44,7 +44,6 @@ export async function POST(req: Request) {
     }
 
     if (action === 'PUBLISH_OPTIONS') {
-      // Clear old and insert new
       await supabaseAdmin.from('repair_options').delete().eq('booking_id', bookingId);
       const optionsToInsert = data.options.map(o => ({
         booking_id: bookingId,
@@ -72,14 +71,15 @@ export async function POST(req: Request) {
     }
 
     if (action === 'DOCUMENT_PART') {
+      // FIX: Ensure labels are optional and map to correct DB columns
       const { error } = await supabaseAdmin.from('part_documentation').insert({
         booking_id: bookingId,
-        removed_part_name: data.name,
+        removed_part_name: data.name || 'Visual Evidence',
         removed_part_photo: data.photo,
-        serial_number: data.serial
+        serial_number: data.serial || 'N/A'
       });
       if (error) throw error;
-      await logActivity(bookingId, 'EVIDENCE_LOG', `Uploaded proof for ${data.name}`, adminEmail);
+      await logActivity(bookingId, 'EVIDENCE_LOG', `Uploaded proof for ${data.name || 'Unlabeled Part'}`, adminEmail);
       return NextResponse.json({ success: true });
     }
 

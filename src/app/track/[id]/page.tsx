@@ -83,13 +83,18 @@ export default function AdvancedTrackingPage() {
       const res = await fetch('/api/admin/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'CALLBACK_REQUEST', bookingId: booking.id }),
+        body: JSON.stringify({
+          action: 'CALLBACK_REQUEST',
+          bookingId: booking.id
+        }),
       });
       if (res.ok) {
         alert('CALLBACK LOGGED: Our technical lead will call you on your registered number shortly.');
         window.location.reload();
       }
-    } catch (e) { alert('Sync Failed.'); }
+    } catch (e) {
+      alert('Sync Failed.');
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fbfbfa] dark:bg-slate-950 text-indigo-600 transition-colors duration-500"><Loader2 className="animate-spin" size={48} /></div>;
@@ -113,6 +118,7 @@ export default function AdvancedTrackingPage() {
     <div className="min-h-screen bg-[#fbfbfa] dark:bg-slate-950 text-[#09090b] dark:text-white font-sans selection:bg-indigo-500/30 transition-colors duration-500 pb-20">
       <div className="max-w-3xl mx-auto p-5 md:p-8 space-y-10 md:y-12">
         
+        {/* Mobile-Friendly Navigation Header */}
         <div className="flex items-center justify-between">
           <Link href="/" className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-2">
             <ArrowLeft size={14} /> Home
@@ -120,10 +126,11 @@ export default function AdvancedTrackingPage() {
           <ThemeToggle />
         </div>
 
+        {/* Improved Responsive Header - PRIVACY FIRST */}
         <div className="flex flex-col gap-6 border-b border-black/5 dark:border-white/5 pb-8">
           <div className="space-y-1">
-            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-indigo-600 dark:text-indigo-400 italic">Repair Status</h1>
-            <div className="flex items-center gap-2 text-slate-400">
+            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-indigo-600 dark:text-indigo-400 italic leading-none">Repair Status</h1>
+            <div className="flex items-center gap-2 text-slate-400 pt-2">
                <User size={14} />
                <p className="text-[10px] font-black uppercase tracking-widest">Verification: <span className="text-[#09090b] dark:text-white">{booking.customer_name}</span></p>
             </div>
@@ -132,12 +139,11 @@ export default function AdvancedTrackingPage() {
               <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-3 py-2 rounded-xl flex items-center gap-2 shadow-sm">
                 <Hash size={12} className="text-slate-400"/><span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{booking.id.slice(0, 8)}</span>
               </div>
-              <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-3 py-2 rounded-xl flex items-center gap-2 shadow-sm">
-                <Phone size={12} className="text-slate-400"/><span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{booking?.customer_phone}</span>
-              </div>
+              {/* PHONE NUMBER REMOVED FOR PRIVACY/SAFETY AS REQUESTED */}
           </div>
         </div>
 
+        {/* Timeline - Mobile Optimized Spacing */}
         <div className="space-y-4 relative before:absolute before:left-[11px] before:top-4 before:bottom-4 before:w-0.5 before:bg-black/5 dark:before:bg-white/5 text-[#09090b] dark:text-white">
           {stages.map((stage, index) => {
             const isCompleted = index < currentStageIdx || booking.status === 'DELIVERED';
@@ -160,7 +166,9 @@ export default function AdvancedTrackingPage() {
                 }`}>
                   <button onClick={() => setExpandedStage(isExpanded ? null : stage.id)} disabled={isFuture} className="w-full p-4 md:p-6 text-left flex justify-between items-center group">
                     <div>
-                      <h3 className={`text-[11px] font-black uppercase tracking-widest ${isCompleted ? 'text-green-600' : isActive ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`}>{stage.title}</h3>
+                      <h3 className={`text-[11px] font-black uppercase tracking-widest transition-colors ${
+                        isCompleted ? 'text-green-600' : isActive ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'
+                      }`}>{stage.title}</h3>
                       <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 uppercase tracking-tighter leading-tight">{stage.desc}</p>
                     </div>
                     {!isFuture && (
@@ -185,7 +193,7 @@ export default function AdvancedTrackingPage() {
                       )}
 
                       {stage.id === 'AWAITING_APPROVAL' && options.length > 0 && (
-                        <div className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
+                        <div className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5 text-[#09090b] dark:text-white">
                            <div className="space-y-3">
                               {options.filter(o => !o.option_name.includes('CALL US')).map((opt) => (
                                  <div key={opt.id} className="bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all shadow-sm">

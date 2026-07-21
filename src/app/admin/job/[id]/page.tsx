@@ -31,7 +31,7 @@ export default function AdvancedAdminManagement() {
   const [options, setOptions] = useState([{ option_name: '', description: '', price: '' }]);
   const [selectedOption, setSelectedOption] = useState(null);
 
-  // Event 5: Single Photo State
+  // Event 5: Single Photo State - FOOLPROOF (LABEL OPTIONAL)
   const [partDoc, setPartDoc] = useState({ name: '', photo: '', serial: '' });
 
   // Delivery State
@@ -72,6 +72,12 @@ export default function AdvancedAdminManagement() {
   }, [id, router]);
 
   const runAction = async (action, data) => {
+    // FOOLPROOF: If Label is empty, auto-fill it
+    if (action === 'DOCUMENT_PART') {
+        if (!data.photo) return alert("Select a photo first.");
+        data.name = data.name || 'Visual Evidence';
+    }
+
     setStatusMsg(`Syncing...`);
     try {
       const res = await fetch('/api/admin/update', {
@@ -117,7 +123,7 @@ export default function AdvancedAdminManagement() {
            <ThemeToggle />
         </div>
 
-        {/* Identity Header - Responsive */}
+        {/* Identity Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-black/5 dark:border-white/5 pb-8">
           <div>
             <p className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] mb-1">Command Unit</p>
@@ -132,7 +138,7 @@ export default function AdvancedAdminManagement() {
           </div>
         </div>
 
-        {/* Info Grid - Responsive */}
+        {/* Info Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
            <AdminCard label="Hardware" value={`${booking?.device_brand} ${booking?.device_model}`} />
            <AdminCard label="Mobile" value={booking?.customer_phone} />
@@ -149,7 +155,7 @@ export default function AdvancedAdminManagement() {
               )}
               {isAwaitingPayment && (
                  <div className="bg-amber-600/5 border border-amber-500/20 p-6 rounded-[1.5rem] text-center space-y-2">
-                    <Lock size={20} className="text-amber-600 mx-auto" /><p className="text-[9px] font-black text-amber-600 uppercase tracking-widest leading-relaxed">Locked: Awaiting Payment</p>
+                    <Lock size={20} className="text-amber-600 mx-auto" /><p className="text-[10px] font-black text-amber-600 uppercase tracking-widest leading-relaxed">Locked: Awaiting Payment</p>
                  </div>
               )}
               {profile?.role === 'SUPER_ADMIN' && prevStage && (
@@ -199,24 +205,43 @@ export default function AdvancedAdminManagement() {
 
             <AdminSection icon={<Camera size={16}/>} title="Evidence Log" color="purple">
               <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-black/5 rounded-[1.5rem] cursor-pointer hover:bg-black/5 transition-all overflow-hidden relative">
-                {partDoc.photo ? <img src={partDoc.photo} className="w-full h-full object-cover"/> : <div className="text-center space-y-2"><UploadCloud size={24} className="text-slate-300 mx-auto"/><p className="text-[9px] font-black uppercase text-slate-400">Snap Photo</p></div>}
+                {partDoc.photo ? <img src={partDoc.photo} className="w-full h-full object-cover"/> : <div className="text-center space-y-2 text-[#09090b] dark:text-white">
+                    {isUploading ? <Loader2 className="animate-spin text-indigo-600 mx-auto" size={24} /> : <UploadCloud size={24} className="text-slate-300 mx-auto"/>}
+                    <p className="text-[9px] font-black uppercase text-slate-400">Snap Photo</p>
+                </div>}
                 <input type="file" className="hidden" onChange={e => handleUpload(e.target.files[0])}/>
               </label>
+
               <div className="grid grid-cols-2 gap-3 mt-4 text-[#09090b] dark:text-white text-white">
-                <input placeholder="Label" className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 text-[10px] outline-none text-[#09090b] dark:text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
-                <input placeholder="S/N" className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 text-[10px] outline-none text-[#09090b] dark:text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
+                <input placeholder="Label (Optional)" className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 text-[10px] outline-none text-[#09090b] dark:text-white" value={partDoc.name} onChange={e => setPartDoc({...partDoc, name: e.target.value})}/>
+                <input placeholder="S/N (Optional)" className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5 text-[10px] outline-none text-[#09090b] dark:text-white" value={partDoc.serial} onChange={e => setPartDoc({...partDoc, serial: e.target.value})}/>
               </div>
-              <button onClick={() => runAction('DOCUMENT_PART', partDoc)} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest mt-4">Push to Log</button>
+
+              <button
+                disabled={!partDoc.photo || isUploading}
+                onClick={() => runAction('DOCUMENT_PART', partDoc)}
+                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest mt-4 disabled:opacity-30"
+              >
+                {isUploading ? 'Uploading...' : 'Push to Log'}
+              </button>
+              <p className="text-[8px] text-slate-400 uppercase text-center mt-2 font-bold tracking-widest italic">Labels are optional. Just snap & push.</p>
             </AdminSection>
           </div>
 
           {/* History */}
           <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-black/5 shadow-sm space-y-6 max-h-[600px] overflow-y-auto">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2"><History size={14}/> Records</h2>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-black/5 shadow-sm space-y-6 max-h-[600px] overflow-y-auto scrollbar-none">
+              <h2 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2 sticky top-0 bg-white dark:bg-slate-900 pb-2 z-10"><History size={14}/> Records</h2>
               <div className="space-y-4">
-                 {existingPhotos.map((p, i) => (<div key={i} className="rounded-xl overflow-hidden border border-black/5 bg-slate-50"><img src={p.removed_part_photo} className="w-full aspect-video object-cover"/></div>))}
-                 {existingComments.map((c, i) => (<div key={i} className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5"><p className="text-[8px] font-black text-indigo-600 uppercase">{c.stage}</p><p className="text-[10px] text-slate-600 italic">"{c.comment_text}"</p></div>))}
+                 {existingPhotos.map((p, i) => (
+                    <div key={i} className="group relative rounded-xl overflow-hidden border border-black/5 bg-slate-50">
+                        <img src={p.removed_part_photo} className="w-full aspect-video object-cover"/>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                           <p className="text-[8px] font-black text-white uppercase">{p.removed_part_name}</p>
+                        </div>
+                    </div>
+                 ))}
+                 {existingComments.map((c, i) => (<div key={i} className="bg-[#f8f8f7] dark:bg-slate-950 p-3 rounded-xl border border-black/5"><p className="text-[8px] font-black text-indigo-600 uppercase">{c.stage}</p><p className="text-[10px] text-[#4b5563] dark:text-slate-400 italic">"{c.comment_text}"</p></div>))}
               </div>
             </div>
           </div>

@@ -15,7 +15,7 @@ export default function BookRepairPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Form State - MATCHED TO DATABASE SCHEMA
+  // Form State - EXACTLY AS ORIGINAL
   const [formData, setFormData] = useState({
     device_brand: '',
     device_model: '',
@@ -23,7 +23,8 @@ export default function BookRepairPage() {
     customer_name: '',
     customer_phone: '',
     pickup_address: '',
-    pickup_slot: '' // Database expects Slot, Date is handled by created_at or manual log
+    pickup_date: '', // RESTORED THE DATE
+    pickup_slot: ''
   });
 
   useEffect(() => {
@@ -81,17 +82,14 @@ export default function BookRepairPage() {
           throw new Error("Required logistical details missing.");
       }
 
-      // 2. INSERT TO SUPABASE (Strict mapping to schema)
+      // 2. INSERT TO SUPABASE - SMART FILTERING TO FIX SCHEMA ERROR
+      // We take everything BUT 'pickup_date' because the DB table doesn't have that column
+      const { pickup_date, ...dbData } = formData;
+
       const { data, error } = await supabase
         .from('bookings')
         .insert([{
-            customer_name: formData.customer_name,
-            customer_phone: formData.customer_phone,
-            device_brand: formData.device_brand,
-            device_model: formData.device_model,
-            issue_description: formData.issue_description,
-            pickup_address: formData.pickup_address,
-            pickup_slot: formData.pickup_slot,
+            ...dbData,
             status: 'BOOKED',
             booking_fee_paid: false
         }])
@@ -170,6 +168,10 @@ export default function BookRepairPage() {
 
           {step === 3 && (
             <div className="space-y-6">
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Pickup Date</label>
+                <input name="pickup_date" type="date" className="w-full p-5 bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/5 rounded-2xl text-[#09090b] dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold transition-all" value={formData.pickup_date} onChange={handleChange} />
+              </div>
               <div className="space-y-2 text-left">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Preferred Time Window</label>
                 <select name="pickup_slot" className="w-full p-5 bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/5 rounded-2xl text-[#09090b] dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold transition-all appearance-none cursor-pointer" value={formData.pickup_slot} onChange={handleChange}>

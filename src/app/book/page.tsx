@@ -23,7 +23,7 @@ export default function BookRepairPage() {
     customer_name: '',
     customer_phone: '',
     pickup_address: '',
-    pickup_date: '', // RESTORED THE DATE
+    pickup_date: '',
     pickup_slot: ''
   });
 
@@ -82,24 +82,54 @@ export default function BookRepairPage() {
           throw new Error("Required logistical details missing.");
       }
 
-      // 2. INSERT TO SUPABASE - SMART FILTERING TO FIX SCHEMA ERROR
-      // We take everything BUT 'pickup_date' because the DB table doesn't have that column
-      const { pickup_date, ...dbData } = formData;
+      // 2. INSERT TO SUPABASE - SMART MAPPING TO PREVENT RLS/SCHEMA ERRORS
+      // We explicitly map only the columns that the table allows public insertion for.
+      // We do NOT send pickup_date to the database because it creates a schema error.
+      const dbInsertData = {
+        customer_name: formData.customer_name,
+        customer_phone: formData.customer_phone,
+        device_brand: formData.device_brand,
+        device_model: formData.device_model,
+        issue_description: formData.issue_description,
+        pickup_address: formData.pickup_address,
+        pickup_slot: formData.pickup_slot,
+        status: 'BOOKED',
+        booking_fee_paid: false
+      };
 
       const { data, error } = await supabase
         .from('bookings')
-        .insert([{
-            ...dbData,
-            status: 'BOOKED',
-            booking_fee_paid: false
-        }])
+        .insert([dbInsertData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+          // If RLS error occurs, it's usually because 'status' or 'booking_fee_paid'
+          // are not allowed to be set by the public. Let's try inserting ONLY user data.
+          if (error.code === '42501') {
+              const { data: retryData, error: retryError } = await supabase
+                .from('bookings')
+                .insert([{
+                    customer_name: formData.customer_name,
+                    customer_phone: formData.customer_phone,
+                    device_brand: formData.device_brand,
+                    device_model: formData.device_model,
+                    issue_description: formData.issue_description,
+                    pickup_address: formData.pickup_address,
+                    pickup_slot: formData.pickup_slot
+                }])
+                .select()
+                .single();
 
-      // 3. START RAZORPAY
-      await startPayment(data.id);
+              if (retryError) throw retryError;
+              await startPayment(retryData.id);
+          } else {
+              throw error;
+          }
+      } else {
+          await startPayment(data.id);
+      }
+
     } catch (e) {
       alert('Booking Error: ' + e.message);
     } finally {
@@ -113,7 +143,7 @@ export default function BookRepairPage() {
 
         {/* Header Navigation */}
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-2">
+          <Link href="/" className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-2 text-[#09090b] dark:text-white">
             <ArrowLeft size={14} /> Home
           </Link>
           <ThemeToggle />

@@ -33,31 +33,31 @@ export default function HomePage() {
               <div className="space-y-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Services</p>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="/book" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white hover:text-indigo-600 transition-colors">Book a Repair</Link>
-                  <Link href="/track" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white hover:text-indigo-600 transition-colors">Track Your Repair</Link>
+                  <Link href="/book" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Book a Repair</Link>
+                  <Link href="/track" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Track Your Repair</Link>
                 </nav>
               </div>
 
               <div className="space-y-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Partnerships</p>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="/institutional" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white hover:text-indigo-600 transition-colors">Institutional Solutions</Link>
+                  <Link href="/institutional" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Institutional Solutions</Link>
                 </nav>
               </div>
 
               <div className="space-y-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Resources</p>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white hover:text-indigo-600 transition-colors">FAQs</Link>
-                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white hover:text-indigo-600 transition-colors">Warranty Policy</Link>
+                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">FAQs</Link>
+                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Warranty Policy</Link>
                 </nav>
               </div>
 
               <div className="space-y-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Coming Soon</p>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="/nox-labs" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white hover:text-indigo-600 transition-colors">NOX Labs</Link>
-                  <Link href="/nox-compute" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white hover:text-indigo-600 transition-colors">NOX Compute</Link>
+                  <Link href="/nox-labs" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Labs</Link>
+                  <Link href="/nox-compute" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Compute</Link>
                 </nav>
               </div>
             </div>
@@ -92,16 +92,16 @@ export default function HomePage() {
 
       {/* TWO-COLUMN HERO INTERFACE */}
       <header className="relative pt-32 pb-20 md:pt-48 md:pb-40 px-6 md:px-12">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center text-left">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
 
           {/* Left Column: Copy & Actions Hub */}
-          <div className="space-y-12">
+          <div className="space-y-12 text-left">
             <div className="space-y-8">
               <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] text-[#09090b] dark:text-white">
                 Fix your device. <br />
                 <span className="text-indigo-600">Without the <br /> anxiety.</span>
               </h1>
-              <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium tracking-tight">
+              <p className="text-sm md:text-base text-slate-400 dark:text-slate-500 font-medium tracking-tight">
                 Guaranteed 24-Hour Turnaround • Absolute Data Privacy • Fully Active Across Delhi
               </p>
             </div>
@@ -129,42 +129,42 @@ export default function HomePage() {
           {/* Right Column: Live Tracking Portal Preview */}
           <div className="relative hidden lg:block">
             <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden p-1 px-1 scale-105">
-               <div className="bg-[#f8f8f7] dark:bg-slate-950 p-6 md:p-10 rounded-[2.2rem] space-y-10 min-h-[450px] text-left">
+               <div className="bg-[#f8f8f7] dark:bg-slate-950 p-6 md:p-10 rounded-[2.2rem] space-y-10 min-h-[450px]">
                   <div className="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-4">
                     <div className="flex gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-400/50" />
                       <div className="w-2.5 h-2.5 rounded-full bg-amber-400/50" />
                       <div className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
                     </div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">cepheus-tracking-portal</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">cepheus-tracking-portal</p>
                   </div>
 
                   <div className="space-y-12">
-                     <div className="flex justify-between items-center text-[#09090b] dark:text-white">
+                     <div className="flex justify-between items-center text-[#09090b] dark:text-white text-left">
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60">ACTIVE REPAIR:</p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">DIAGNOSTIC VIEW ||</p>
                      </div>
 
-                     <div className="space-y-8">
+                     <div className="space-y-8 text-left">
                         <div className="flex items-start gap-4">
                            <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
                            <div>
                              <p className="text-sm font-black uppercase text-[#09090b] dark:text-white">01 / Secure Intake Logged</p>
-                             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight mt-1">Verified at door • Complete</p>
+                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">Verified at door • Complete</p>
                            </div>
                         </div>
                         <div className="flex items-start gap-4 animate-pulse">
                            <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
                            <div>
                              <p className="text-sm font-black uppercase text-[#09090b] dark:text-white">02 / Live Component Diagnosis</p>
-                             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight mt-1">Teardown analysis in progress</p>
+                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">Teardown analysis in progress</p>
                            </div>
                         </div>
                      </div>
 
-                     <div className="pt-12 border-t border-black/5 dark:border-white/5 grid grid-cols-2 gap-4">
-                        <div><p className="text-[9px] font-black text-slate-500 uppercase mb-1">ESTIMATED TIME:</p><p className="text-xs font-bold text-[#09090b] dark:text-white">24 Hours</p></div>
-                        <div className="text-right"><p className="text-[9px] font-black text-slate-500 uppercase mb-1">PARTS STATUS:</p><p className="text-[10px] font-black text-orange-500 uppercase">PENDING PRE-APPROVAL</p></div>
+                     <div className="pt-12 border-t border-black/5 dark:border-white/5 grid grid-cols-2 gap-4 text-left">
+                        <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">ESTIMATED TIME:</p><p className="text-xs font-bold text-[#09090b] dark:text-white">24 Hours</p></div>
+                        <div className="text-right"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">PARTS STATUS:</p><p className="text-[10px] font-black text-orange-500 uppercase">PENDING PRE-APPROVAL</p></div>
                      </div>
                   </div>
                </div>
@@ -180,8 +180,8 @@ export default function HomePage() {
       </header>
 
       {/* WORKFLOW STREAM */}
-      <main className="px-6 md:px-12 py-32 bg-white dark:bg-slate-900 transition-colors border-y border-black/5 dark:border-white/5">
-        <div className="max-w-7xl mx-auto space-y-20 text-left">
+      <main className="px-6 md:px-12 py-32 bg-white dark:bg-slate-900 transition-colors border-y border-black/5 dark:border-white/5 text-left">
+        <div className="max-w-7xl mx-auto space-y-20">
           <div className="space-y-2">
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">How Do We Work?</h2>
             <p className="text-base text-slate-400 font-medium uppercase tracking-tight">Simple. Fast. Reliable.</p>
@@ -197,10 +197,10 @@ export default function HomePage() {
         </div>
 
         {/* Institutional Inline Banner */}
-        <div className="max-w-7xl mx-auto bg-[#f8f8f7] dark:bg-slate-950 p-10 md:p-12 rounded-[3rem] border border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 mt-20 text-left">
-          <div className="space-y-4 max-w-2xl">
+        <div className="max-w-7xl mx-auto bg-[#f8f8f7] dark:bg-slate-950 p-10 md:p-12 rounded-[3rem] border border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 mt-20">
+          <div className="space-y-4 max-w-2xl text-left">
             <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-[#09090b] dark:text-white">Managing devices for a school, college, or office?</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium uppercase tracking-tight">We provide dedicated frameworks for institutional clients—featuring itemized audit trails and pre-approved pricing lists.</p>
+            <p className="text-sm text-[#4b5563] dark:text-slate-400 leading-relaxed font-medium uppercase tracking-tight">We provide dedicated frameworks for institutional clients—featuring itemized audit trails and pre-approved pricing lists.</p>
           </div>
           <Link href="/institutional" className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#09090b] dark:text-white hover:bg-indigo-600 hover:text-white transition-all whitespace-nowrap">
             Explore Enterprise Solutions →
@@ -210,10 +210,10 @@ export default function HomePage() {
 
       {/* FOOTER ARCHITECTURE */}
       <footer className="px-6 md:px-12 py-32 bg-white dark:bg-slate-900 transition-colors">
-        <div className="max-w-7xl mx-auto text-left">
+        <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-12 md:gap-20">
-            <div className="col-span-2 md:col-span-1 space-y-8">
-              <Link href="/" className="logo text-xl font-black uppercase tracking-[0.15em] text-[#09090b] dark:text-white no-underline">
+            <div className="col-span-2 md:col-span-1 space-y-8 text-left">
+              <Link href="/" className="logo text-xl font-black uppercase tracking-[0.15em] text-[#09090b] dark:text-white no-underline text-left">
                 CEPHEUS
               </Link>
               <p className="text-xs font-medium text-slate-500 leading-relaxed uppercase tracking-tight">
@@ -225,7 +225,7 @@ export default function HomePage() {
             <FooterCol title="Operations" links={['Book a Repair', 'Track Your Repair', 'Institutional Solutions']} />
             <FooterCol title="Ecosystem" links={['NOX Labs', 'NOX Compute']} />
             <FooterCol title="Framework" links={['Privacy Policy', 'Terms of Service', 'Audit Guidelines']} />
-            <div className="space-y-8">
+            <div className="space-y-8 text-left">
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400">Connect</p>
               <div className="flex gap-6 text-[#09090b] dark:text-white opacity-40 hover:opacity-100 transition-opacity">
                 <Instagram size={18} /> <Linkedin size={18} /> <Mail size={18} />
@@ -233,7 +233,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-32 pt-12 border-t border-black/5 dark:border-white/5">
+          <div className="mt-32 pt-12 border-t border-black/5 dark:border-white/5 text-left">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">
               © 2026 CEPHEUS. ALL RIGHTS RESERVED.
             </p>
@@ -246,20 +246,20 @@ export default function HomePage() {
 
 function PillarTag({ label }) {
   return (
-    <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-4 py-2 rounded-xl shadow-sm">
+    <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-black/5 dark:border-white/5 px-4 py-2 rounded-xl shadow-sm text-left">
        <span className="text-indigo-600 font-bold">✓</span>
-       <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">{label}</span>
+       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">{label}</span>
     </div>
   );
 }
 
 function WorkStep({ number, title, desc, isLink }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
       <p className="text-[10px] font-black text-slate-400 border-t border-black/5 dark:border-white/5 pt-4 uppercase">{number}</p>
       <div className="space-y-3">
         <h3 className="text-base font-black uppercase tracking-tighter text-[#09090b] dark:text-white">{title}</h3>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{desc} {isLink && <span className="text-indigo-600 underline">Tracking Portal.</span>}</p>
+        <p className="text-[11px] text-slate-500 leading-relaxed font-medium">{desc} {isLink && <span className="text-indigo-600 underline">Tracking Portal.</span>}</p>
       </div>
     </div>
   );
@@ -267,11 +267,11 @@ function WorkStep({ number, title, desc, isLink }) {
 
 function FooterCol({ title, links }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 text-left">
       <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">{title}</p>
-      <div className="flex flex-col space-y-3">
+      <div className="flex flex-col space-y-3 text-left">
         {links.map((link) => (
-          <Link key={link} href="/" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-indigo-600 transition-colors">{link}</Link>
+          <Link key={link} href="/" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors text-left">{link}</Link>
         ))}
       </div>
     </div>

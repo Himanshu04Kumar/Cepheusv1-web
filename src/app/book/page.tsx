@@ -106,8 +106,8 @@ export default function BookingPage() {
                 <FormGroup label="Hardware Brand" placeholder="e.g. Dell, HP, Apple" value={formData.brand} onChange={v => setFormData({...formData, brand: v})} />
                 <FormGroup label="Model Name" placeholder="e.g. XPS 13, MacBook Air" value={formData.model} onChange={v => setFormData({...formData, model: v})} />
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#6b6c76] ml-1">Describe Issue</label>
-                  <textarea required className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors min-h-[100px] text-white" placeholder="What's wrong with your device?" value={formData.issue} onChange={e => setFormData({...formData, issue: e.target.value})} />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#6b6c76] dark:text-slate-500 ml-1">Describe Issue</label>
+                  <textarea required className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors min-h-[100px] text-[#09090b] dark:text-white" placeholder="What's wrong with your device?" value={formData.issue} onChange={e => setFormData({...formData, issue: e.target.value})} />
                 </div>
               </div>
             )}
@@ -121,13 +121,13 @@ export default function BookingPage() {
 
             {step === 3 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="space-y-2 text-white">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#6b6c76] ml-1 text-white">Full Pickup Address</label>
-                  <textarea required className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors min-h-[100px] text-white" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#6b6c76] dark:text-slate-500 ml-1">Full Pickup Address</label>
+                  <textarea required className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors min-h-[100px] text-[#09090b] dark:text-white" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                 </div>
-                <div className="space-y-2 text-white">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#6b6c76] ml-1 text-white">Select Slot</label>
-                  <select className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors text-white" value={formData.slot} onChange={e => setFormData({...formData, slot: e.target.value})}>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#6b6c76] dark:text-slate-500 ml-1">Select Slot</label>
+                  <select className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors text-[#09090b] dark:text-white" value={formData.slot} onChange={e => setFormData({...formData, slot: e.target.value})}>
                     <option>Tomorrow, 10 AM - 12 PM</option>
                     <option>Tomorrow, 2 PM - 4 PM</option>
                     <option>Day after, 10 AM - 12 PM</option>
@@ -136,9 +136,9 @@ export default function BookingPage() {
               </div>
             )}
 
-            <div className="flex gap-4 pt-4 border-t border-black/5 dark:border-white/5 text-white">
+            <div className="flex gap-4 pt-4 border-t border-black/5 dark:border-white/5">
               {step > 1 && (
-                <button disabled={loading} type="button" onClick={prevStep} className="flex-1 py-4 border border-black/10 dark:border-white/10 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-white">
+                <button disabled={loading} type="button" onClick={prevStep} className="flex-1 py-4 border border-black/10 dark:border-white/10 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-[#09090b] dark:text-white">
                   Back
                 </button>
               )}
@@ -156,9 +156,9 @@ export default function BookingPage() {
 
 function FormGroup({ label, placeholder, value, onChange, type = "text" }) {
   return (
-    <div className="space-y-2 text-white">
+    <div className="space-y-2">
       <label className="text-[10px] font-black uppercase tracking-widest text-[#6b6c76] dark:text-slate-500 ml-1">{label}</label>
-      <input type={type} className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors text-[#09090b] dark:text-white text-white" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} required />
+      <input type={type} className="w-full bg-[#f8f8f7] dark:bg-slate-950 border border-black/5 dark:border-white/10 rounded-xl p-4 text-xs font-medium outline-none focus:border-indigo-500 transition-colors text-[#09090b] dark:text-white" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} required />
     </div>
   );
 }

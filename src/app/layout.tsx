@@ -18,6 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <div className="bg-yellow-500 text-black text-[10px] font-bold py-1 px-4 text-center uppercase tracking-widest">
+          Website under construction - some features may be broken
+        </div>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

@@ -1,171 +1,183 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  ArrowRight,
-  Menu,
-  X,
-  Shield,
-  Zap,
-  Clock,
-  ChevronRight,
-  Instagram,
-  Linkedin,
-  Mail,
-  Camera
-} from 'lucide-react';
 import Link from 'next/link';
+import { Truck, ShieldCheck, Camera, ArrowRight, Globe, Menu, X, ChevronRight, Zap, Award, Users, MessageSquare, Clock, CheckCircle2, Instagram, Linkedin, Mail, Check, Layout, Database, Smartphone } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-export default function LandingPage() {
+export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#fbfbfa] dark:bg-slate-950 text-[#09090b] dark:text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden transition-colors duration-500">
 
-      {/* MOBILE OVERLAY MENU */}
-      <div className={`fixed inset-0 bg-white dark:bg-slate-950 z-[100] transition-all duration-700 ${menuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'} p-8 flex flex-col justify-between`}>
-        <div className="flex justify-between items-center">
-          <Link href="/" onClick={() => setMenuOpen(false)} className="logo text-2xl font-black uppercase tracking-[0.2em]">CEPHEUS</Link>
-          <div className="flex items-center gap-6">
+      {/* SIDE-VIEW NAVIGATION DRAWER PANELS */}
+      <div className={`fixed inset-0 z-[100] bg-[#fbfbfa]/95 dark:bg-slate-950/95 backdrop-blur-xl transition-transform duration-700 ease-in-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="p-8 h-full flex flex-col">
+          <div className="flex justify-between items-center mb-12">
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400">MENU</span>
-            <button onClick={() => setMenuOpen(false)} className="p-2 bg-black/5 dark:bg-white/5 rounded-full">
+            <button onClick={() => setMenuOpen(false)} className="p-3 bg-black/5 dark:bg-white/5 rounded-full hover:rotate-90 transition-all duration-300">
               <X size={24} className="text-[#09090b] dark:text-white" />
             </button>
           </div>
-        </div>
-        <div className="space-y-12">
-          <div className="space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Services</p>
-            <div className="flex flex-col gap-4">
-              <Link href="/book" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Book a Repair</Link>
-              <Link href="/track" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Track Your Repair</Link>
+          <div className="flex-1 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Services</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/book" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Book a Repair</Link>
+                  <Link href="/track" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Track Your Repair</Link>
+                </nav>
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Partnerships</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/institutional" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Institutional Solutions</Link>
+                </nav>
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Resources</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">FAQs</Link>
+                  <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Warranty Policy</Link>
+                </nav>
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Coming Soon</p>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="/nox-labs" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Labs</Link>
+                  <Link href="/nox-compute" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Compute</Link>
+                </nav>
+              </div>
+            </div>
+
+            <div className="mt-12 pt-12 border-t border-black/5 dark:border-white/5">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Fully Live Across Delhi</span>
+                </div>
             </div>
           </div>
-          <div className="space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Partnerships</p>
-            <div className="flex flex-col gap-4">
-              <Link href="/institutional" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Institutional Solutions</Link>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Resources</p>
-            <div className="flex flex-col gap-4 text-slate-400">
-              <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">FAQs</Link>
-              <Link href="/coming-soon" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">Warranty Policy</Link>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Coming Soon</p>
-            <div className="flex flex-col gap-4 text-slate-400">
-              <Link href="/nox-labs" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Labs</Link>
-              <Link href="/nox-compute" onClick={() => setMenuOpen(false)} className="text-3xl font-black uppercase tracking-tighter hover:text-indigo-600 transition-colors">NOX Compute</Link>
-            </div>
-          </div>
-        </div>
-        <div className="pt-8 border-t border-black/5 dark:border-white/5 flex justify-between items-center">
-          <div className="flex gap-4">
-            <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center"><Instagram size={16} /></div>
-            <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center"><Linkedin size={16} /></div>
-          </div>
-          <span className="text-[9px] font-black uppercase tracking-widest">Fully Live Across Delhi</span>
         </div>
       </div>
 
-      {/* HEADER SECTION */}
-      <header className="px-6 md:px-12 py-8 flex items-center justify-between sticky top-0 bg-[#fbfbfa]/80 dark:bg-slate-950/80 backdrop-blur-xl z-50 transition-colors border-b border-black/[0.03] dark:border-white/[0.03]">
-        <div className="flex items-center gap-12">
+      {/* CLEAN NAVBAR WITH BOOK NOW & HAMBURGER PAIRED */}
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-[#fbfbfa]/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5 py-4' : 'bg-transparent py-8'}`}>
+        <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           <Link href="/" className="logo text-lg font-black uppercase tracking-[0.15em] text-[#09090b] dark:text-white no-underline">
             CEPHEUS
           </Link>
+          <div className="flex items-center gap-3 md:gap-8">
+            <ThemeToggle />
+            <Link href="/book" className="flex bg-indigo-600 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 whitespace-nowrap">
+              Book Now
+            </Link>
+            <button onClick={() => setMenuOpen(true)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all">
+              <Menu size={24} className="text-[#09090b] dark:text-white" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-4 md:gap-8">
-          <ThemeToggle />
-          <Link href="/book" className="flex bg-indigo-600 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 whitespace-nowrap">
-            Initialize Repair
-          </Link>
-          <button onClick={() => setMenuOpen(true)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
-            <Menu size={24} className="text-[#09090b] dark:text-white" />
-          </button>
-        </div>
-      </header>
+      </nav>
 
-      {/* HERO SECTION */}
-      <section className="px-6 md:px-12 pt-24 pb-32 text-center md:text-left relative">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-20">
-          <div className="flex-1 space-y-10">
-            <div className="space-y-4">
+      {/* TWO-COLUMN HERO INTERFACE */}
+      <header className="relative pt-32 pb-20 md:pt-48 md:pb-40 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+
+          {/* Left Column: Copy & Actions Hub */}
+          <div className="space-y-12 text-left">
+            <div className="space-y-8">
               <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] text-[#09090b] dark:text-white">
-                Electronics <br />
+                Fix your device. <br />
                 <span className="text-indigo-600">Without the <br /> anxiety.</span>
               </h1>
-              <p className="text-base md:text-lg text-slate-500 font-medium uppercase tracking-tight max-w-lg leading-tight">
-                Doorstep pickup, photographic documentation, and verifiable warranty. Experience repair at infrastructure scale.
+              <p className="text-sm md:text-base text-slate-400 dark:text-slate-500 font-medium tracking-tight">
+                Guaranteed 24-Hour Turnaround • Absolute Data Privacy • Fully Active Across Delhi
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            {/* BALANCED 6-PILLAR MATRIX */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2">
+               <PillarTag label="Doorstep Inspection" />
+               <PillarTag label="Verified Parts" />
+               <PillarTag label="Live Tracking Log" />
+               <PillarTag label="Your Data Stays Yours" />
+               <PillarTag label="No Fix, No Fee" />
+               <PillarTag label="1Y Warranty" />
+            </div>
+
+            <div className="flex flex-wrap gap-4 pt-4">
               <Link href="/book" className="bg-indigo-600 text-white px-10 py-5 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-600/20 min-w-[200px] text-center">
                 Book a Repair
               </Link>
               <Link href="/track" className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 px-10 py-5 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-[#fbfbfa] dark:hover:bg-slate-800 transition-all text-[#09090b] dark:text-white shadow-sm min-w-[200px] text-center">
-                Track Unit
+                Track Your Repair
               </Link>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12">
-               <PillarTag label="Delhi/NCR Live" />
-               <PillarTag label="1-Year Warranty" />
-               <PillarTag label="Secure Logistics" />
-               <PillarTag label="Photo Evidence" />
             </div>
           </div>
 
-          {/* Abstract Console/UI Visual */}
-          <div className="flex-1 hidden lg:block w-full">
-            <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-[3rem] p-12 shadow-2xl relative group overflow-hidden transition-all duration-700 hover:shadow-indigo-500/10">
-                 <div className="space-y-8">
-                    <div className="flex justify-between items-center border-b border-black/5 dark:border-white/5 pb-6">
-                        <div className="space-y-1">
-                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">cepheus-tracking-portal</p>
-                            <h3 className="text-2xl font-black uppercase tracking-tighter italic">Unit: #8821-X</h3>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-indigo-600/10 flex items-center justify-center"><Shield size={20} className="text-indigo-600" /></div>
+          {/* Right Column: Live Tracking Portal Preview */}
+          <div className="relative hidden lg:block">
+            <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden p-1 px-1 scale-105">
+               <div className="bg-[#f8f8f7] dark:bg-slate-950 p-6 md:p-10 rounded-[2.2rem] space-y-10 min-h-[450px]">
+                  <div className="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-4">
+                    <div className="flex gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-400/50" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-400/50" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-400/50" />
                     </div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">cepheus-tracking-portal</p>
+                  </div>
+
+                  <div className="space-y-12">
                      <div className="flex justify-between items-center text-[#09090b] dark:text-white text-left">
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60">ACTIVE REPAIR:</p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">DIAGNOSTIC VIEW ||</p>
                      </div>
-                     <div className="space-y-6">
-                        <div className="flex gap-4 items-start">
+
+                     <div className="space-y-8 text-left">
+                        <div className="flex items-start gap-4">
                            <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
-                           <div className="text-left">
+                           <div>
                              <p className="text-sm font-black uppercase text-[#09090b] dark:text-white">01 / Secure Intake Logged</p>
                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">Verified at door • Complete</p>
                            </div>
                         </div>
-                        <div className="flex gap-4 items-start">
+                        <div className="flex items-start gap-4 animate-pulse">
                            <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
-                           <div className="text-left">
+                           <div>
                              <p className="text-sm font-black uppercase text-[#09090b] dark:text-white">02 / Live Component Diagnosis</p>
                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">Teardown analysis in progress</p>
                            </div>
                         </div>
                      </div>
-                     <div className="pt-8 border-t border-black/5 dark:border-white/5 flex justify-between">
+
+                     <div className="pt-12 border-t border-black/5 dark:border-white/5 grid grid-cols-2 gap-4 text-left">
                         <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">ESTIMATED TIME:</p><p className="text-xs font-bold text-[#09090b] dark:text-white">24 Hours</p></div>
                         <div className="text-right"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">PARTS STATUS:</p><p className="text-[10px] font-black text-orange-500 uppercase">PENDING PRE-APPROVAL</p></div>
                      </div>
-                 </div>
+                  </div>
+               </div>
             </div>
-            <div className="mt-8 flex justify-between items-center px-10">
+
+            {/* Ecosystem Capsule */}
+            <div className="absolute -bottom-8 left-0 right-0 mx-auto w-max bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 px-6 py-4 rounded-full shadow-2xl flex items-center gap-4">
                <div className="bg-indigo-600/10 text-indigo-600 px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest">Now Live</div>
                <p className="text-[10px] font-black uppercase tracking-widest text-[#09090b] dark:text-white">Computers & Laptops • <span className="opacity-40">Expanding soon</span></p>
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
       {/* WORKFLOW STREAM */}
       <main className="px-6 md:px-12 py-32 bg-white dark:bg-slate-900 transition-colors border-y border-black/5 dark:border-white/5 text-left">
@@ -210,9 +222,29 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <FooterCol title="Operations" links={['Book a Repair', 'Track Your Repair', 'Institutional Solutions']} />
-            <FooterCol title="Ecosystem" links={['NOX Labs', 'NOX Compute']} />
-            <FooterCol title="Framework" links={['Privacy Policy', 'Terms of Service', 'Audit Guidelines']} />
+            <FooterCol
+              title="Operations"
+              links={[
+                { name: 'Book a Repair', href: '/book' },
+                { name: 'Track Your Repair', href: '/track' },
+                { name: 'Institutional Solutions', href: '/institutional' }
+              ]}
+            />
+            <FooterCol
+              title="Ecosystem"
+              links={[
+                { name: 'NOX Labs', href: '/nox-labs' },
+                { name: 'NOX Compute', href: '/nox-compute' }
+              ]}
+            />
+            <FooterCol
+              title="Framework"
+              links={[
+                { name: 'Privacy Policy', href: '/coming-soon' },
+                { name: 'Terms of Service', href: '/coming-soon' },
+                { name: 'Audit Guidelines', href: '/coming-soon' }
+              ]}
+            />
             <div className="space-y-8 text-left">
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400">Connect</p>
               <div className="flex gap-6 text-[#09090b] dark:text-white opacity-40 hover:opacity-100 transition-opacity">
@@ -256,23 +288,12 @@ function WorkStep({ number, title, desc, isLink }) {
 }
 
 function FooterCol({ title, links }) {
-  const linkMap = {
-    'Book a Repair': '/book',
-    'Track Your Repair': '/track',
-    'Institutional Solutions': '/institutional',
-    'NOX Labs': '/nox-labs',
-    'NOX Compute': '/nox-compute',
-    'Privacy Policy': '/coming-soon',
-    'Terms of Service': '/coming-soon',
-    'Audit Guidelines': '/coming-soon'
-  };
-
   return (
     <div className="space-y-8 text-left">
       <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">{title}</p>
       <div className="flex flex-col space-y-3 text-left">
         {links.map((link) => (
-          <Link key={link} href={linkMap[link] || '/'} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors text-left">{link}</Link>
+          <Link key={link.name} href={link.href} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors text-left">{link.name}</Link>
         ))}
       </div>
     </div>

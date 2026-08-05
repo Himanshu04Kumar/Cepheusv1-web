@@ -87,7 +87,7 @@ export default function HomePage() {
                   <span className="pillar-tag"><span class="check-icon">✓</span> Live Tracking Log</span>
                   <span className="pillar-tag"><span class="check-icon">✓</span> Your Data Stays Yours</span>
                   <span className="pillar-tag"><span class="check-icon">✓</span> No Fix, No Fee</span>
-                  <span className="pillar-tag"><span class="check-icon">✓</span> 1Y Warranty</span>
+                  <span className="pillar-tag"><span class="check-icon">✓</span> Upto 1Y Warranty</span>
               </div>
               <div className="hero-actions">
                   <Link href="/book" className="btn btn-primary btn-lg">Book a Repair</Link>
